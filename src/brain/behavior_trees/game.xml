@@ -1,0 +1,50 @@
+<root BTCPP_format="4">
+    <BehaviorTree ID="MainTree">
+        <Sequence name="root">
+            <RunOnce><Script code="control_state=1" /></RunOnce>
+
+            <ReactiveSequence _while="control_state==1">
+
+                <ReactiveSequence _while="gc_is_under_penalty" name="Penalty">
+                    <SetVelocity x="0.0" y="0.0" theta="0.0" />
+                </ReactiveSequence>
+
+                <ReactiveSequence _while="!gc_is_under_penalty" name="No_Penalty">
+                    
+                    <ReactiveSequence _while="gc_game_sub_state_type=='TIMEOUT'" name="Timeout">
+                        <SetVelocity x="0.0" y="0.0" theta="0.0" />
+                    </ReactiveSequence>
+
+                    <ReactiveSequence _while="gc_game_sub_state_type=='NONE'" name="Normal_Game">
+                        
+                        <ReactiveSequence _while="gc_game_state=='INITIAL'" name="Initial">
+                            <SetVelocity x="0.0" y="0.0" theta="0.0" />
+                        </ReactiveSequence>
+
+                        <ReactiveSequence _while="gc_game_state=='READY'" name="Ready">
+                            <SetVelocity x="0.3" y="0.0" theta="0.0" />
+                        </ReactiveSequence>
+
+                        <ReactiveSequence _while="gc_game_state=='SET'" name="Set">
+                            <SetVelocity x="0.0" y="0.0" theta="0.0" />
+                        </ReactiveSequence>
+
+                        <ReactiveSequence _while="gc_game_state=='PLAY'" name="Play">
+                            <SetVelocity x="0.0" y="0.0" theta="0.0" />
+                        </ReactiveSequence>
+
+                        <ReactiveSequence _while="gc_game_state=='END'" name="End">
+                            <SetVelocity x="0.0" y="0.0" theta="0.0" />
+                        </ReactiveSequence>
+
+                    </ReactiveSequence>
+
+                    <ReactiveSequence _while="gc_game_sub_state_type=='FREE_KICK' && gc_game_state=='PLAY'" name="Free_Kick">
+                         <SetVelocity x="0.0" y="0.0" theta="0.0" />
+                    </ReactiveSequence>
+
+                </ReactiveSequence>
+            </ReactiveSequence>
+        </Sequence>
+    </BehaviorTree>
+</root>

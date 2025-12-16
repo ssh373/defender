@@ -1,0 +1,20 @@
+brain_node:
+  ros__parameters:
+    game:
+      team_id: 100 # must be consistant with GameControl
+      player_id: 1 # 1 | 2 | 3 | 4 | 5
+      field_type: "kid_size" # adult_size | kid_size | robo_league
+      player_role: "striker" # striker | goal_keeper
+      treat_person_as_robot: false 
+      number_of_players: 4
+     
+      robot: # 로봇 제어할 때 clapping 등 동작을 위한 파라미터
+        robot_height: 0.9 
+        odom_factor: 1.2 
+        vx_factor: 0.50 
+        yaw_offset: 0.0 
+        vx_limit: 1.0 
+        vy_limit: 0.4
+        vtheta_limit: 1.2 
+
+      game_control_ip: "192.168.50.221"
