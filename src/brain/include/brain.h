@@ -37,6 +37,7 @@
 #include "robot_client.h"
 #include "brain_config.h"
 #include "walk.h"
+#include "movehead.h"
 
 
 using namespace std;
@@ -59,7 +60,7 @@ public:
 
     // 행동 노드들 등록
     void registerWalkNodes(BT::BehaviorTreeFactory &factory){RegisterWalkNodes(factory, this);}
-
+    void registerMoveHeadNodes(BT::BehaviorTreeFactory &factory){RegisterMoveHeadNodes(factory, this);}
     // ROS callback 함수
     void detectionsCallback(const vision_interface::msg::Detections::SharedPtr msg);
 

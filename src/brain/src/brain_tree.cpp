@@ -28,6 +28,7 @@ void BrainTree::init()
     REGISTER_BUILDER(MoveHead)
 
     brain->registerWalkNodes(factory); // walk 관련 노드 등록
+    brain->registerMoveHeadNodes(factory); // walk 관련 노드 등록
 
     factory.registerBehaviorTreeFromFile(brain->config->treeFilePath);
     tree = factory.createTree("MainTree");

@@ -49,6 +49,7 @@ set(SOURCE_FILES
   src/brain_tree.cpp 
   src/robot_client.cpp 
   src/walk.cpp
+  src/movehead.cpp
 )
 
 add_executable(brain_node ${SOURCE_FILES})
