@@ -51,7 +51,7 @@ struct BrainData {
     // --------------------------- 로봇 위치 관련 변수 ---------------------------
     Pose2D robotPoseToField;
     Pose2D odomToField;      
-    Pose2D robotPoseToField; 
+    Pose2D robotPoseToOdom;  
 
     Eigen::Matrix4d camToRobot = Eigen::Matrix4d::Identity(); 
 
