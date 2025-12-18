@@ -510,7 +510,6 @@ NodeStatus SelfLocateEnterField::tick()
     } else res = resLeft;
 
     if (report != lastReport) {
-        brain->speak(report);
         lastReport = report;
     }
 
