@@ -14,14 +14,68 @@
 
 void RegisterMoveHeadNodes(BT::BehaviorTreeFactory &factory, Brain* brain){
     REGISTER_MOVEHEAD_BUILDER(MoveHead) // 속도 제어
+    REGISTER_MOVEHEAD_BUILDER(CamFindBall) // 카메라로 공 찾기
     
 }
 
-NodeStatus MoveHead::tick()
-{
+NodeStatus MoveHead::tick(){
     double pitch, yaw;
     getInput("pitch", pitch);
     getInput("yaw", yaw);
     brain->client->moveHead(pitch, yaw);
+    return NodeStatus::SUCCESS;
+}
+
+
+CamFindBall::CamFindBall(const string &name, const NodeConfig &config, Brain *_brain) : SyncActionNode(name, config), brain(_brain)
+{
+    double lowPitch = 1.0;
+    double highPitch = 0.45;
+    double leftYaw = 1.1;
+    double rightYaw = -1.1;
+
+    _cmdSequence[0][0] = lowPitch;
+    _cmdSequence[0][1] = leftYaw;
+    _cmdSequence[1][0] = lowPitch;
+    _cmdSequence[1][1] = 0;
+    _cmdSequence[2][0] = lowPitch;
+    _cmdSequence[2][1] = rightYaw;
+    _cmdSequence[3][0] = highPitch;
+    _cmdSequence[3][1] = rightYaw;
+    _cmdSequence[4][0] = highPitch;
+    _cmdSequence[4][1] = 0;
+    _cmdSequence[5][0] = highPitch;
+    _cmdSequence[5][1] = leftYaw;
+
+    _cmdIndex = 0;
+    _cmdIntervalMSec = 800;
+    _cmdRestartIntervalMSec = 50000;
+    _timeLastCmd = brain->get_clock()->now();
+}
+
+NodeStatus CamFindBall::tick()
+{
+    if (brain->data->ballDetected)
+    {
+        return NodeStatus::SUCCESS;
+    }
+
+    auto curTime = brain->get_clock()->now();
+    auto timeSinceLastCmd = (curTime - _timeLastCmd).nanoseconds() / 1e6;
+    if (timeSinceLastCmd < _cmdIntervalMSec)
+    {
+        return NodeStatus::SUCCESS;
+    } 
+    else if (timeSinceLastCmd > _cmdRestartIntervalMSec)
+    {                 
+        _cmdIndex = 0; 
+    }
+    else
+    { 
+        _cmdIndex = (_cmdIndex + 1) % (sizeof(_cmdSequence) / sizeof(_cmdSequence[0]));
+    }
+
+    brain->client->moveHead(_cmdSequence[_cmdIndex][0], _cmdSequence[_cmdIndex][1]);
+    _timeLastCmd = brain->get_clock()->now();
     return NodeStatus::SUCCESS;
 }

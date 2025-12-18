@@ -26,6 +26,7 @@
                         
                         <ReactiveSequence _while="gc_game_state=='INITIAL'" name="Initial">
                             <SetVelocity x="0.0" y="0.0" theta="0.0" />
+                            <CamFindBall />
                             <SelfLocateEnterField />
                         </ReactiveSequence>
 
