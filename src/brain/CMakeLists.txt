@@ -54,6 +54,7 @@ set(SOURCE_FILES
   src/brain_log.cpp
   src/locator.cpp
   src/chase.cpp
+  src/kick.cpp
 )
 
 add_executable(brain_node ${SOURCE_FILES})

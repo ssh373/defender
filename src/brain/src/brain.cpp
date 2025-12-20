@@ -39,8 +39,6 @@ Brain::Brain() : rclcpp::Node("brain_node"){
     declare_parameter<double>("robot.vy_limit", 0.4);
     declare_parameter<double>("robot.vtheta_limit", 1.0);
 
-    
-
     declare_parameter<double>("robot.robot_height", 1.0);
     declare_parameter<double>("robot.odom_factor", 1.0);
 
@@ -52,9 +50,13 @@ Brain::Brain() : rclcpp::Node("brain_node"){
     declare_parameter<bool>("chase.limit_near_ball_speed", true);
     declare_parameter<double>("chase.near_ball_speed_limit", 0.3);
     declare_parameter<double>("chase.near_ball_range", 4.0);
+    declare_parameter<bool>("obstacle_avoidance.avoid_during_chase", false);
+    declare_parameter<double>("obstacle_avoidance.chase_ao_safe_dist", 2.0);
 
-    // occupancy 관련 파라미터
+    // obstacle 관련 파라미터
     declare_parameter<int>("obstacle_avoidance.occupancy_threshold", 5);
+    declare_parameter<bool>("obstacle_avoidance.enable_freekick_avoid", false);
+    declare_parameter<double>("obstacle_avoidance.obstacle_memory_msecs", 500.0);
 
     // 카메라 관련 파라미터 
     declare_parameter<string>("vision.image_topic", "/camera/camera/color/image_raw");  // RGB 카메라 이미지 토픽
@@ -66,6 +68,17 @@ Brain::Brain() : rclcpp::Node("brain_node"){
 
     declare_parameter<string>("vision_config_path", "");
     declare_parameter<string>("vision_config_local_path", "");
+
+    // 장애물을 인식하는 depth callback 관련 파라미터 
+    declare_parameter<int>("depth_obstacle_preprocessing.depth_sample_step", 16);
+    declare_parameter<double>("depth_obstacle_preprocessing.obstacle_min_height", 0.15);
+    declare_parameter<double>("depth_obstacle_preprocessing.grid_size", 0.2);
+    declare_parameter<double>("depth_obstacle_preprocessing.max_x", 0.2);
+    declare_parameter<double>("depth_obstacle_preprocessing.max_y", 0.2);
+    declare_parameter<double>("depth_obstacle_preprocessing.exclusion_x", 0.25);
+    declare_parameter<double>("depth_obstacle_preprocessing.exclusion_y", 0.4);
+    declare_parameter<double>("depth_obstacle_preprocessing.ball_exclusion_radius", 0.3);
+    declare_parameter<double>("depth_obstacle_preprocessing.ball_exclusion_height", 0.3);
 
     // rerun 관련 파라미터 
     declare_parameter<bool>("rerunLog.enable_tcp", false);  // TCP 로그 전송 활성화 여부
@@ -110,6 +123,9 @@ void Brain::init(){
     data->timeLastGamecontrolMsg = get_clock()->now();  // 마지막 게임컨트롤 메시지 수신 시각
     data->ball.timePoint = get_clock()->now();  // 마지막 공 위치 업데이트 시각
 
+    // 현재 시각
+    auto now = get_clock()->now();
+    
     // ROS callback 연결
     detectionsSubscription = create_subscription<vision_interface::msg::Detections>("/booster_vision/detection", SUB_STATE_QUEUE_SIZE, bind(&Brain::detectionsCallback, this, _1));
     subFieldLine = create_subscription<vision_interface::msg::LineSegments>("/booster_vision/line_segments", SUB_STATE_QUEUE_SIZE, bind(&Brain::fieldLineCallback, this, _1));
@@ -117,6 +133,9 @@ void Brain::init(){
     lowStateSubscription = create_subscription<booster_interface::msg::LowState>("/low_state", SUB_STATE_QUEUE_SIZE, bind(&Brain::lowStateCallback, this, _1));
     headPoseSubscription = create_subscription<geometry_msgs::msg::Pose>("/head_pose", SUB_STATE_QUEUE_SIZE, bind(&Brain::headPoseCallback, this, _1));
     recoveryStateSubscription = create_subscription<booster_interface::msg::RawBytesMsg>("fall_down_recovery_state", SUB_STATE_QUEUE_SIZE, bind(&Brain::recoveryStateCallback, this, _1));
+    // depth 이미지
+    string depthTopic = get_parameter("vision.depth_image_topic").as_string();
+    depthImageSubscription = create_subscription<sensor_msgs::msg::Image>(depthTopic, SUB_STATE_QUEUE_SIZE, bind(&Brain::depthImageCallback, this, _1));
 
     // rerun 연결 시에만 사용함 -> 이미지 캡처
     if (config->rerunLogEnableFile || config->rerunLogEnableTCP) {
@@ -225,12 +244,14 @@ void Brain::loadConfig(){
 
 void Brain::tick(){ 
     updateBallMemory(); // 공 위치 기억 업데이트
-
+    updateObstacleMemory(); // obstacle 기억 업데이트 
+    
     tree->tick(); 
 }
 
 
 /* ----------------------------- time 관련 함수 유틸 -------------------------------*/
+// 얼마나 시간이 흘렀는지 확인하는 함수
 double Brain::msecsSince(rclcpp::Time time){
     auto now = this->get_clock()->now();
     if (time.get_clock_type() != now.get_clock_type()) return 1e18;
@@ -544,9 +565,199 @@ void Brain::recoveryStateCallback(const booster_interface::msg::RawBytesMsg &msg
         std::cerr << e.what() << '\n';
     }
 }
+/*
+    depthImageCallback()은 Depth 이미지(깊이맵)를 받아서 3D 포인트로 복원 
+    → 로봇 좌표계로 변환 
+    → 2D 그리드로 투영해 장애물 점유도를 만들고 
+    → GameObject 장애물 목록을 갱신/정리 
+    → Rerun으로 시각화 로그까지 남기는 콜백
+*/
 
+// 로그 부분 주석 처리함
+void Brain::depthImageCallback(const sensor_msgs::msg::Image &msg){
+    try {
+        // 이미지 데이터가 유효한지 확인
+        if (msg.data.empty() || msg.height == 0 || msg.width == 0) { // 비어있으면 종료
+            RCLCPP_WARN(get_logger(), "Received empty depth image");
+            return;
+        }
 
-void Brain::imageCallback(const sensor_msgs::msg::Image &msg){ // rerun 시각화용
+        // depth 이미지 생성 및 변환
+        cv::Mat depthFloat;
+        // 이미지 인코딩 형식에 따른 처리
+        if (msg.encoding == "16UC1" || msg.encoding == "mono16") {
+            size_t expected = (size_t)msg.width * msg.height * sizeof(uint16_t);
+            if (msg.data.size() < expected) {
+                RCLCPP_ERROR(get_logger(), "Depth mono16 size mismatch");
+                return;
+            }
+            // 16-bit unsigned depth = 보통 mm 단위 
+            cv::Mat depthRaw(msg.height, msg.width, CV_16UC1, const_cast<uint8_t*>(msg.data.data()));
+            depthRaw.convertTo(depthFloat, CV_32FC1, 1.0 / 1000.0); //  1/1000 곱해서 meter로 변환
+        } 
+        else if (msg.encoding == "32FC1") {
+            // 데이터 크기가 올바른지 확인
+            size_t expected_size = msg.height * msg.width * sizeof(float);
+            if (msg.data.size() != expected_size) {
+                RCLCPP_ERROR(get_logger(), "Depth image size mismatch: expected %zu, got %zu", 
+                    expected_size, msg.data.size());
+                return;
+            }
+            // 32-bit float depth = 보통 meter 단위
+            depthFloat = cv::Mat(msg.height, msg.width, CV_32FC1, 
+                const_cast<float*>(reinterpret_cast<const float*>(msg.data.data()))).clone();
+            
+        } 
+        else {
+            RCLCPP_ERROR(get_logger(), "Unsupported depth image encoding: %s", msg.encoding.c_str());
+            return;
+        }
+
+        vector<rerun::Vec3D> points_robot;  // 로그를 위한 변수
+
+        const double fx = config->camfx;
+        const double fy = config->camfy;
+        const double cx = config->camcx;
+        const double cy = config->camcy;
+        
+        /* 
+            로봇 기준 좌표계에서
+	        앞쪽(x): 0m ~ max_x 까지만
+	        좌우(y): -max_y ~ +max_y 범위만
+            이 영역을 grid_size 간격으로 잘라서 점유 카운팅할 격자를 만든다
+         */ 
+        const double grid_size = get_parameter("depth_obstacle_preprocessing.grid_size").as_double();  // 그리드 크기
+        const double x_min = 0.0, x_max = get_parameter("depth_obstacle_preprocessing.max_x").as_double();
+        const double y_min = -get_parameter("depth_obstacle_preprocessing.max_y").as_double();
+        const double y_max = -y_min;
+        const int grid_x_count = static_cast<int>((x_max - x_min) / grid_size);
+        const int grid_y_count = static_cast<int>((y_max - y_min) / grid_size);
+        
+        // 그리드 점유 배열 생성
+        // 각 셀에 “몇 개의 depth 포인트가 들어왔는지” 카운트
+	    // 0이면 비어있음, 값이 크면 해당 셀에 포인트가 많이 찍힘(장애물 가능성↑)
+        vector<vector<int>> grid_occupied(grid_x_count, vector<int>(grid_y_count, 0));
+        
+        // 모든 픽셀을 다 쓰면 너무 무거워서 step 간격으로 다운샘플링
+        const int sampleStep = get_parameter("depth_obstacle_preprocessing.depth_sample_step").as_int();
+        for (int y = 0; y < msg.height; y += sampleStep)
+        {
+            for (int x = 0; x < msg.width; x += sampleStep)
+            {
+                float depth = depthFloat.at<float>(y, x);
+                if (depth > 0)
+                {
+                    // 카메라 좌표계로 변환
+                    double x_cam = (x - cx) * depth / fx;
+                    double y_cam = (y - cy) * depth / fy;
+                    double z_cam = depth;
+
+                    // 로봇 좌표계로 변환
+                    Eigen::Vector4d point_cam(x_cam, y_cam, z_cam, 1.0);
+                    Eigen::Vector4d point_robot = data->camToRobot * point_cam;
+                    
+                    // 시각화를 위해 사용 -> 0 : 로봇 기준 x, 1 : 로봇 기준 y, 2 : 높이 z
+                    points_robot.push_back(rerun::Vec3D{point_robot(0), point_robot(1), point_robot(2)});
+                    
+                    // 여기부터 장애물로 볼 것인지 필터링을 함
+                    const double Z_THRESHOLD = get_parameter("depth_obstacle_preprocessing.obstacle_min_height").as_double();
+                    const double EXCLUDE_MAX_X = get_parameter("depth_obstacle_preprocessing.exclusion_x").as_double(); // 로봇 자신의 몸체를 제외
+                    const double EXCLUDE_MIN_X = -EXCLUDE_MAX_X;
+                    const double EXCLUDE_MAX_Y = get_parameter("depth_obstacle_preprocessing.exclusion_y").as_double(); // 로봇 자신의 몸체를 제외
+                    const double EXCLUDE_MIN_Y = -EXCLUDE_MAX_Y;
+
+                    auto isInRange = [&]() { // 장애물 감지 범위 내에 있는지
+                        return point_robot(0) >= x_min && point_robot(0) < x_max
+                            && point_robot(1) >= y_min && point_robot(1) < y_max;
+                    };
+                    auto isSelfBody = [&]() { // 로봇 자신의 몸체 영역인지
+                        return point_robot(0) >= EXCLUDE_MIN_X && point_robot(0) <= EXCLUDE_MAX_X
+                            && point_robot(1) >= EXCLUDE_MIN_Y && point_robot(1) <= EXCLUDE_MAX_Y;
+                    };
+                    auto isBall = [&]() { // 공의 위치 영역인지
+                        double r = get_parameter("depth_obstacle_preprocessing.ball_exclusion_radius").as_double();
+                        double h = get_parameter("depth_obstacle_preprocessing.ball_exclusion_height").as_double();
+                        return fabs(point_robot(0) - data->ball.posToRobot.x) < r 
+                            && fabs(point_robot(1) - data->ball.posToRobot.y) < r
+                            && point_robot(2) < h;
+                    };
+                    
+                    // 높이 임계값보다 크고 장애물 감지 범위 내에 있으며, 로봇 자신의 몸이 아니고, 공이 아닐 때 장애물로 간주
+                    if ( point_robot(2) > Z_THRESHOLD && isInRange() &&!isSelfBody() &&!isBall()){
+                        int grid_x = static_cast<int>((point_robot(0) - x_min) / grid_size);
+                        int grid_y = static_cast<int>((point_robot(1) - y_min) / grid_size);
+                        grid_occupied[grid_x][grid_y] += 1;
+                    }
+                }
+            }
+        }
+
+        auto obs_old = data->getObstacles(); // 이전 장애물
+        vector<GameObject> obs_new = {};
+
+        // 이번에 확인된 장애물 기록 
+        for (int i = 0; i < grid_x_count; i++) {
+            for (int j = 0; j < grid_y_count; j++) {
+                if (grid_occupied[i][j] > 0) { // 장애물이면 
+                    GameObject obj;
+                    obj.label = "Obstacle";
+                    obj.timePoint = get_clock()->now();
+                    obj.posToRobot.x = x_min + (i + 0.5) * grid_size;
+                    obj.posToRobot.y = y_min + (j + 0.5) * grid_size;
+                    obj.confidence = grid_occupied[i][j]; // 포인트가 많이 찍힌 셀 = 더 강한 장애물 후보
+                    updateFieldPos(obj); // 로봇 좌표(posToRobot)를 필드 좌표(posToField)로 변환
+                    obs_new.push_back(obj);
+                }
+            }
+        }
+
+        // 기존 장애물(obs_old) 정리 및 병합 로직
+        for (int i = 0; i < obs_old.size(); i++) {
+           //   현재 시야 범위 내의 기존 장애물을 먼저 제거. 각도는 대략적으로 계산되었으며, 오프셋을 통해 범위를 적절히 확장
+           /*   카메라가 바라보는 FOV 안에 기존 장애물이 있었는데
+                이번 프레임 obs_new에 안 잡혔다면
+                “없어진 걸로 보고 지워야” 장애물이 계속 누적되지 않음
+                단, 여기 각도 계산은 “대략적”이어서 offset으로 범위를 키워서 보수적으로 처리하고 있음.
+            */
+            double visionLeft = data->headYaw + config->camAngleX / 2;
+            double visionRight = data->headYaw - config->camAngleX / 2;
+            auto obs = obs_old[i];
+            const double offset = 0.20;
+            double obsYawLeft = atan2(obs.posToRobot.y - offset, obs.posToRobot.x + offset);
+            double obsYawRight = atan2(obs.posToRobot.y + offset, obs.posToRobot.x + offset);
+            if (obsYawLeft < visionLeft && obsYawRight > visionRight) continue; 
+
+            // 기존 관측값(obs)과 새로운 관측값이 너무 근접한 경우, 기존 관측값이 더 이상 존재하지 않는 것으로 간주하여 경계 상황에서 관측값이 누적되는 것을 방지
+            bool found = false;
+            for (int j = 0; j < obs_new.size(); j++) {
+                auto obs_n = obs_new[j];
+                double dist = norm(obs.posToRobot.x - obs_n.posToRobot.x, obs.posToRobot.y - obs_n.posToRobot.y);
+                if (dist < 0.5 * grid_size) { // 시야 밖의 옛 장애물은 “너무 가까운 새 장애물”이 있으면 제거
+                    found = true;
+                    break;
+                }
+            }
+            if (found) continue;
+
+            // 그 외는 유지
+            obs_new.push_back(obs);
+        }
+
+        
+        data->setObstacles(obs_new); // note :여기서는 시간 초과된 오래된 장애물을 지우지 않고, 틱(tick)에서 정리
+        
+        log->setTimeSeconds(detection_utils::timePointFromHeader(msg.header).seconds());
+        // logDepth(grid_x_count, grid_y_count, grid_occupied, points_robot);
+        // logObstacles();
+
+    } 
+    catch (const std::exception& e) {
+        RCLCPP_ERROR(get_logger(), "Exception in depth image callback: %s", e.what());
+    }
+}
+
+// 단순 rerun 시각화용
+void Brain::imageCallback(const sensor_msgs::msg::Image &msg){
     static int counter = 0;
     counter++;
     if (counter % config->rerunLogImgInterval == 0)
@@ -650,6 +861,45 @@ void Brain::updateBallMemory(){
     //     tree->getEntry<bool>("tm_ball_pos_reliable")
     //     );
 }
+// 장애물 리스트를 매 주기마다 정리하고 BrainData에 다시 저장하는 함수
+// 장애물 리스트 업데이트 시 특수 상황 인지를 위한 함수 (공을 장애물로 인식할지 말지를 결정)
+bool Brain::isFreekickStartPlacing() {
+    return (tree->getEntry<string>("gc_game_sub_state_type") == "FREE_KICK" && tree->getEntry<string>("gc_game_state") == "PLAY" && tree->getEntry<string>("gc_game_sub_state") == "GET_READY");
+}
+// 장애물 리스트 업데이트 함수
+// 로그는 주석 처리됨
+void Brain::updateObstacleMemory() {
+   
+    auto obstacles = data->getObstacles();
+    vector<GameObject> obs_new = {};
+
+    const double OBS_EXPIRE_TIME = get_parameter("obstacle_avoidance.obstacle_memory_msecs").as_double();
+    for (int i = 0; i < obstacles.size(); i++) {
+        auto obs = obstacles[i];
+        if (obs.label == "Ball") continue; 
+        // 오래된 장애물 제거
+        if (msecsSince(obs.timePoint) > OBS_EXPIRE_TIME)  continue; 
+
+        updateRelativePos(obs);
+        obs_new.push_back(obs);
+    }
+
+    /* 
+        특수 상황
+        freekick 시작 상황에서 공 근처로 접근하면 안되니까 공을 장애물처럼 취급 
+        READY 상태에도 공을 장애물처럼 취급
+    */ 
+    if (
+        (get_parameter("obstacle_avoidance.enable_freekick_avoid").as_bool() && isFreekickStartPlacing())
+        || tree->getEntry<string>("gc_game_state") == "READY"
+    ) {
+        obs_new.push_back(data->ball);
+    }
+
+    data->setObstacles(obs_new);
+    // logObstacles();
+}
+
 
 /* ------------------------- 나중에 따로 뺄 거임 ----------------------------------*/
 void Brain::calibrateOdom(double x, double y, double theta){
@@ -818,7 +1068,8 @@ void Brain::logDetection(const vector<GameObject> &gameObjects, bool logBounding
     );
 }
 
-/*---------------------공통으로 쓰이는 판단 로직 함수 -------------------*/
+/*-------------------------------------------- 공통으로 쓰이는 판단 로직 함수 --------------------------------------------*/
+// obstacle과 관련된 로직 함수들 
 double Brain::distToObstacle(double angle) {
     auto obs = data->getObstacles();
     double minDist = 1e9;
@@ -886,4 +1137,63 @@ double Brain::calcAvoidDir(double startAngle, double safeDist) {
         return 0;
     }
     return toPInPI(determinedAngle);
+}
+
+// kick과 관련된 로직 함수들
+// 이것도 반코트로 로직 수정했음 -> 나중에 풀코트로 수정 필요
+vector<double> Brain::getGoalPostAngles(const double margin){ // 공(ball) 위치를 기준으로 왼쪽·오른쪽 골포스트가 이루는 각도(θ)를 계산해서 반환
+    
+    double leftX, leftY, rightX, rightY; 
+
+    // 해당 로직이 풀코트로 작성됐음 -> + 방향이 상대방이므로 골대의 위치가 양수로 돼있음 
+    // leftX = config->fieldDimensions.length / 2;
+    // leftY = config->fieldDimensions.goalWidth / 2;
+    // rightX = config->fieldDimensions.length / 2;
+    // rightY = -config->fieldDimensions.goalWidth / 2;
+
+    // 반코트로 수정
+    leftX = -config->fieldDimensions.length / 2; // 음수로 변경
+    leftY = config->fieldDimensions.goalWidth / 2;
+    rightX = -config->fieldDimensions.length / 2; // 음수로 변경
+    rightY = -config->fieldDimensions.goalWidth / 2;
+
+    auto goalposts = data->getGoalposts();
+
+    // 현재 상대방 골대로 라벨링돼있는 골대만 가져오는 중 -> 반코트로 수정
+    // for (int i = 0; i < goalposts.size(); i++){
+    //     auto post = goalposts[i];
+
+    //     if (post.name == "OL"){ // OL은 opponent goal의 left를 의미
+    //         leftX = post.posToField.x;
+    //         leftY = post.posToField.y;
+    //     }
+    //     else if (post.name == "OR"){ // OR은 opponent goal의 right를 의미
+    //         rightX = post.posToField.x;
+    //         rightY = post.posToField.y;
+    //     }
+    // }
+
+    // 반코트로 수정 
+    for (int i = 0; i < goalposts.size(); i++){
+        auto post = goalposts[i];
+
+        if (post.name == "SL"){ // SL은 self goal의 left를 의미
+            leftX = post.posToField.x;
+            leftY = post.posToField.y;
+        }
+        else if (post.name == "SR"){ // SR은 self goal의 right를 의미
+            rightX = post.posToField.x;
+            rightY = post.posToField.y;
+        }
+    }
+
+    // 공 기준에서 골대 방향 각도 계산
+    // 결과 : 공 -> 골대 방향
+    // margin은 골대를 안쪽으로 살짝 좁힘 -> 포스트 맞고 튀는 슛 방지를 위해 
+    // 반코트로 수정했기 때문에 left, right 크기가 바뀌는걸 고민해보기
+    const double theta_l = atan2(leftY - margin - data->ball.posToField.y, leftX - data->ball.posToField.x);
+    const double theta_r = atan2(rightY + margin - data->ball.posToField.y, rightX - data->ball.posToField.x);
+
+    vector<double> vec = {theta_l, theta_r};
+    return vec;
 }

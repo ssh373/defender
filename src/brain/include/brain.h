@@ -41,6 +41,7 @@
 #include "walk.h"
 #include "movehead.h"
 #include "chase.h"
+#include "kick.h"
 
 using namespace std;
 
@@ -81,7 +82,7 @@ public:
     void registerMoveHeadNodes(BT::BehaviorTreeFactory &factory){RegisterMoveHeadNodes(factory, this);}
     void registerLocatorNodes(BT::BehaviorTreeFactory &factory){RegisterLocatorNodes(factory, this);}
     void registerChaseNodes(BT::BehaviorTreeFactory &factory){RegisterChaseNodes(factory, this);}
-    
+    void registerKickNodes(BT::BehaviorTreeFactory &factory){RegisterKickNodes(factory, this);}
     
     // ROS callback 함수
     void gameControlCallback(const game_controller_interface::msg::GameControlData &msg);
@@ -91,23 +92,35 @@ public:
     void lowStateCallback(const booster_interface::msg::LowState &msg);
     void headPoseCallback(const geometry_msgs::msg::Pose &msg);
     void recoveryStateCallback(const booster_interface::msg::RawBytesMsg &msg);
-
+    void depthImageCallback(const sensor_msgs::msg::Image &msg);
     void imageCallback(const sensor_msgs::msg::Image &msg);
 
     /* ----------------------------- 변수 업데이트를 위한 함수들 ----------------------------- */
     void updateRelativePos(GameObject &obj);
+    bool isFreekickStartPlacing();
 
     /*------------------------------- 공통으로 쓰이는 판단 로직 함수 ----------------------------------------------*/
+    // ostacle 관련 함수
+    /**
+     * @brief 목표 각도 기준 충돌까지의 거리 계산
+     *
+     * @param angle double, 목표 방향 각도
+     *
+     * @return double, 충돌까지의 거리
+     */
     double distToObstacle(double angle);
     vector<double> findSafeDirections(double startAngle, double safeDist, double step=deg2rad(10));
     double calcAvoidDir(double startAngle, double safeDist);
     
+    // goalpost 관련 함수
+    vector<double> getGoalPostAngles(const double margin = 0.3);
+
 private:
     void loadConfig(); // config 불러오기
 
     /* ----------------------------- 변수 업데이트를 위한 함수들 ----------------------------- */
     void updateBallMemory();
-    
+    void updateObstacleMemory();
 
     // ROS subscription 변수
     rclcpp::Subscription<game_controller_interface::msg::GameControlData>::SharedPtr gameControlSubscription;
@@ -117,7 +130,7 @@ private:
     rclcpp::Subscription<booster_interface::msg::LowState>::SharedPtr lowStateSubscription;
     rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr headPoseSubscription;
     rclcpp::Subscription<booster_interface::msg::RawBytesMsg>::SharedPtr recoveryStateSubscription;
-
+    rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr depthImageSubscription;
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr imageSubscription;
     
     // tf2 broadcaster

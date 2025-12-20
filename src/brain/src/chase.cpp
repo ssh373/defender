@@ -13,48 +13,48 @@
 
 
 void RegisterChaseNodes(BT::BehaviorTreeFactory &factory, Brain* brain){
-    REGISTER_CHASE_BUILDER(SimpleChase)
-    REGISTER_CHASE_BUILDER(Chase)
+    REGISTER_CHASE_BUILDER(SimpleChase) // obstacle 없이 chase만 
+    REGISTER_CHASE_BUILDER(Chase) // obstacle 추가된 chase
 }
 
-NodeStatus SimpleChase::tick()
-{
+NodeStatus SimpleChase::tick(){
     double stopDist, stopAngle, vyLimit, vxLimit;
-    getInput("stop_dist", stopDist);
-    getInput("stop_angle", stopAngle);
-    getInput("vx_limit", vxLimit);
-    getInput("vy_limit", vyLimit);
+    getInput("stop_dist", stopDist); // 공과의 거리 임계값 -> 멈추기 위해
+    getInput("stop_angle", stopAngle); // 공과의 각도 임계값 -> 멈추기 위해
+    getInput("vx_limit", vxLimit); // x축 속도 제한
+    getInput("vy_limit", vyLimit); // y축 속도 제한
 
-    if (!brain->tree->getEntry<bool>("ball_location_known"))
-    {
+    // 공의 위치를 모를 때 
+    if (!brain->tree->getEntry<bool>("ball_location_known")){
         brain->client->setVelocity(0, 0, 0);
         return NodeStatus::SUCCESS;
     }
 
-    double vx = brain->data->ball.posToRobot.x;
-    double vy = brain->data->ball.posToRobot.y;
-    double vtheta = brain->data->ball.yawToRobot * 4.0; 
+    // 로봇 기준 공과의 거리 
+    // 단순 P 제어
+    double vx = brain->data->ball.posToRobot.x; // 공과의 x축 거리
+    double vy = brain->data->ball.posToRobot.y; // 공과의 y축 거리
+    double vtheta = brain->data->ball.yawToRobot * 4.0; // 공과의 각도
 
+    // 가까워질수록 속도가 줄어들도록
     double linearFactor = 1 / (1 + exp(3 * (brain->data->ball.range * fabs(brain->data->ball.yawToRobot)) - 3)); 
     vx *= linearFactor;
     vy *= linearFactor;
 
+    // 속도 제한
     vx = cap(vx, vxLimit, -1.0);    
     vy = cap(vy, vyLimit, -vyLimit); 
 
-    if (brain->data->ball.range < stopDist)
-    {
+    if (brain->data->ball.range < stopDist){
         vx = 0;
         vy = 0;
-        // if (fabs(brain->data->ball.yawToRobot) < stopAngle) vtheta = 0; 
     }
 
     brain->client->setVelocity(vx, vy, vtheta, false, false, false);
     return NodeStatus::SUCCESS;
 }
 
-NodeStatus Chase::tick()
-{
+NodeStatus Chase::tick(){
     auto log = [=](string msg) {
         brain->log->setTimeNow();
         brain->log->log("debug/Chase4", rerun::TextLog(msg));
@@ -62,32 +62,31 @@ NodeStatus Chase::tick()
     log("ticked");
     
     double vxLimit, vyLimit, vthetaLimit, dist, safeDist;
-    getInput("vx_limit", vxLimit);
+    getInput("vx_limit", vxLimit); // 속도 제한 
     getInput("vy_limit", vyLimit);
     getInput("vtheta_limit", vthetaLimit);
-    getInput("dist", dist);
-    getInput("safe_dist", safeDist);
+    getInput("dist", dist); // 공과의 거리
+    getInput("safe_dist", safeDist); // 공과의 안전 거리
 
     bool avoidObstacle;
-    brain->get_parameter("obstacle_avoidance.avoid_during_chase", avoidObstacle);
+    brain->get_parameter("obstacle_avoidance.avoid_during_chase", avoidObstacle); // 장애물 회피
     double oaSafeDist;
-    brain->get_parameter("obstacle_avoidance.chase_ao_safe_dist", oaSafeDist);
+    brain->get_parameter("obstacle_avoidance.chase_ao_safe_dist", oaSafeDist); 	// 회피 시 최소 안전 거리 oaSafeDist
 
-    if (
-        brain->config->limitNearBallSpeed
-        && brain->data->ball.range < brain->config->nearBallRange
-    ) {
+    // 속도 clapping
+    if ( brain->config->limitNearBallSpeed && brain->data->ball.range < brain->config->nearBallRange){
         vxLimit = min(brain->config->nearBallSpeedLimit, vxLimit);
     }
 
     double ballRange = brain->data->ball.range;
     double ballYaw = brain->data->ball.yawToRobot;
     double kickDir = brain->data->kickDir;
+    // ball → robot 각도 (field)
     double theta_br = atan2(
         brain->data->robotPoseToField.y - brain->data->ball.posToField.y,
         brain->data->robotPoseToField.x - brain->data->ball.posToField.x
     );
-    double theta_rb = brain->data->robotBallAngleToField;
+    double theta_rb = brain->data->robotBallAngleToField; // robot → ball 각도
     auto ballPos = brain->data->ball.posToField;
 
 
@@ -99,13 +98,16 @@ NodeStatus Chase::tick()
     if (targetType == "direct") dirThreshold *= 1.2;
 
 
-    // 计算目标点
+    // 로봇 → 공 방향이 킥 방향과 충분히 유사
     if (fabs(toPInPI(kickDir - theta_rb)) < dirThreshold) {
         log("targetType = direct");
         targetType = "direct";
         target_f.x = ballPos.x - dist * cos(kickDir);
         target_f.y = ballPos.y - dist * sin(kickDir);
-    } else {
+    } 
+    // 로봇 → 공 방향이 킥 방향과 충분히 유사하지 않을 때
+    // 공을 둘러싸는 원을 그리는 방식 	• 공 주위를 원형으로 돌아서 접근
+    else {
         targetType = "circle_back";
         double cbDirThreshold = 0.0; 
         cbDirThreshold -= 0.2 * circleBackDir; 
@@ -115,12 +117,14 @@ NodeStatus Chase::tick()
         target_f.x = ballPos.x + safeDist * cos(tanTheta);
         target_f.y = ballPos.y + safeDist * sin(tanTheta);
     }
+
     target_r = brain->data->field2robot(target_f);
     brain->log->setTimeNow();
     brain->log->logBall("field/chase_target", Point({target_f.x, target_f.y, 0}), 0xFFFFFFFF, false, false);
             
     double targetDir = atan2(target_r.y, target_r.x);
     double distToObstacle = brain->distToObstacle(targetDir);
+    // 장애물을 회피할 때
     if (avoidObstacle && distToObstacle < oaSafeDist) {
         log("avoid obstacle");
         auto avoidDir = brain->calcAvoidDir(targetDir, oaSafeDist);
@@ -128,7 +132,8 @@ NodeStatus Chase::tick()
         vx = speed * cos(avoidDir);
         vy = speed * sin(avoidDir);
         vtheta = ballYaw;
-    } else {
+    } 
+    else {
         vx = min(vxLimit, brain->data->ball.range);
         vy = 0;
         vtheta = targetDir;

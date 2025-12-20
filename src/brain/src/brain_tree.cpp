@@ -25,6 +25,8 @@ void BrainTree::init(){
     brain->registerMoveHeadNodes(factory); // head move 관련 노드 등록
     brain->registerLocatorNodes(factory); // locator 관련 노드 등록
     brain->registerChaseNodes(factory); // chase 관련 노드 등록
+    brain->registerKickNodes(factory); // kick 관련 노드 등록
+    
     
     factory.registerBehaviorTreeFromFile(brain->config->treeFilePath);
     tree = factory.createTree("MainTree");

@@ -9,6 +9,7 @@
 
 namespace detection_utils {
 
+// 이 함수는 나중에 brain.cpp로 빼야될듯
 rclcpp::Time timePointFromHeader(const std_msgs::msg::Header &header) {
     auto stamp = header.stamp;
     auto sec = stamp.sec;
@@ -50,9 +51,9 @@ std::vector<GameObject> detectionsToGameObjects(const vision_interface::msg::Det
         gObj.posToRobot.y = obj.position_projection[1];
 
         // 거리 및 각도 계산
-        gObj.range = norm(gObj.posToRobot.x, gObj.posToRobot.y);
-        gObj.yawToRobot = atan2(gObj.posToRobot.y, gObj.posToRobot.x);
-        gObj.pitchToRobot = atan2(config->robotHeight, gObj.range);
+        gObj.range = norm(gObj.posToRobot.x, gObj.posToRobot.y); // 로봇 기준 거리
+        gObj.yawToRobot = atan2(gObj.posToRobot.y, gObj.posToRobot.x); // 로봇 기준 각도
+        gObj.pitchToRobot = atan2(config->robotHeight, gObj.range); // 로봇 기준 높이
 
         // 좌표 변환
         transCoord(

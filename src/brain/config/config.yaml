@@ -22,19 +22,23 @@ brain_node:
       ball_memory_timeout: 5.0 # 공의 위치를 얼마나 많은 시간동안 기억할지 정하는 파라미터
       
     chase:  
-      limit_near_ball_speed: true
+      limit_near_ball_speed: true # 가까워질수록 속도를 줄일 지 -> 실제론 다가갈 때도 속도가 줄어들음
       near_ball_speed_limit: 0.2 
-      near_ball_range: 3.0
+      near_ball_range: 3.0 # 분명 m 기준일텐데 3m면 너무 큰거 아닌가?
     
     obstacle_avoidance:
       occupancy_threshold: 2000 
-      avoid_during_chase: true 
-      chase_ao_safe_dist: 3.5 
+      # 밑에 2개 변수를 chase에 뺄지 고민중 
+      avoid_during_chase: true # chase 중에 장애물을 회피할 지 여부
+      chase_ao_safe_dist: 3.5 # chase 중 장애물을 회피할 때 최소 안전 거리
+      
+      obstacle_memory_msecs: 500. # 장애물을 얼마나 오랫동안 기억할지 ms 
+      enable_freekick_avoid: false # freekick 중 장애물을 회피할지 여부
 
     locator:
       min_marker_count: 5 # 로컬라이저 최소 마커 수
       max_residual: 0.35 # 최대 잔차 (오차 허용값)
-
+      
     vision:
       image_topic: "/booster_camera_bridge/StereoNetNode/rectified_image" # d-robotics
       depth_image_topic: "/booster_camera_bridge/StereoNetNode/stereonet_depth" # d-robotics
@@ -43,6 +47,17 @@ brain_node:
       cam_fov_x: 69.4 # d-robotics / 카메라 시야각, 단위: 도
       cam_fov_y: 42.5 # d-robotics / 카메라 시야각, 단위: 도
     
+    depth_obstacle_preprocessing: # depth callback parameters
+      depth_sample_step: 16 # 모든 픽셀을 다 쓰면 무거워서 step 간격으로 다운샘플링
+      obstacle_min_height: 0.45 # 장애물로 인식할 최소 높이 (m)
+      grid_size: 0.2 # depth callback에서 쓰이는 그리드 셀 크기
+      max_x: 3.0 # 해당 범위까지만 장애물 인식
+      max_y: 5.0 
+      exclusion_x: 0.4 # 로봇 자신의 몸체를 제외하기 위해
+      exclusion_y: 0.5
+      ball_exclusion_radius: 0.0 # 공을 장애물로 인식하기 하는 것을 제외하기 위해
+      ball_exclusion_height: 0.3 
+
     rerunLog:
       enable_tcp: true # 리런에 연결 할 지
       server_ip: "192.168.50.221:9876" 
