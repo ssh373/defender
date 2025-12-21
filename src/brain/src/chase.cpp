@@ -182,6 +182,7 @@ NodeStatus Chase::tick(){
         brain->log->setTimeNow();
         brain->log->log("debug/Chase4", rerun::TextLog(msg));
     };
+    log("ticked");
     
     // [입력 변수 가져오기]
     double vxLimit, vyLimit, vthetaLimit, dist, safeDist;
@@ -237,6 +238,7 @@ NodeStatus Chase::tick(){
 
     // [상태 전환 로직]
     if (targetType == "direct") {
+        log("targetType = direct");
         // Direct 상태 유지 중: 오차가 exitThreshold를 넘어야만 상태 변경
         if (angleDiff > exitDirectThresh) {
             targetType = "circle_back";
@@ -343,7 +345,7 @@ NodeStatus Chase::tick(){
     // =========================================================================
     
     // 각도 오차가 5도(약 0.09 rad) 이내면 회전 모터를 끔 -> 제자리 떨림 방지 핵심
-    if (fabs(vtheta) < 0.09) {
+    if (fabs(vtheta) < 0.2) {
         vtheta = 0.0;
     }
 
