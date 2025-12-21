@@ -74,7 +74,7 @@ NodeStatus Chase::tick(){
     brain->get_parameter("obstacle_avoidance.chase_ao_safe_dist", oaSafeDist); 	// 회피 시 최소 안전 거리 oaSafeDist
 
     // 속도 clapping
-    if ( brain->config->limitNearBallSpeed && brain->data->ball.range < brain->config->nearBallRange){
+    if (brain->config->limitNearBallSpeed && brain->data->ball.range < brain->config->nearBallRange){
         vxLimit = min(brain->config->nearBallSpeedLimit, vxLimit);
     }
 
@@ -123,6 +123,7 @@ NodeStatus Chase::tick(){
     brain->log->logBall("field/chase_target", Point({target_f.x, target_f.y, 0}), 0xFFFFFFFF, false, false);
             
     double targetDir = atan2(target_r.y, target_r.x);
+    // 승재욱 추가 -> 목표까지의 거리 계산
     double distToTarget = norm(target_r.x, target_r.y); // 목표까지의 거리 계산
     double distToObstacle = brain->distToObstacle(targetDir);
     // 장애물을 회피할 때
@@ -144,7 +145,7 @@ NodeStatus Chase::tick(){
             
             // 도착했으면 '목표 방향(targetDir)'이 아니라 '공 방향(ballYaw)'을 봄
             // 이유: targetDir은 (0,0) 근처라 값이 매우 불안정함 (특이점 문제)
-            vtheta = ballYaw; 
+            vtheta = 0.0; 
         }
         else{
             vx = min(vxLimit, brain->data->ball.range);
@@ -155,7 +156,7 @@ NodeStatus Chase::tick(){
         }
     }
 
-    // 승재욱 추가 -> 공과의 위치가 5도 이하면 그대로 멈춤
+    // 승재욱 추가 -> 공과의 위치가 10도 이하면 그대로 멈춤
     if(fabs(vtheta) < 0.2){
         vtheta = 0;
     }
