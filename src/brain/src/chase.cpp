@@ -142,7 +142,7 @@ NodeStatus Chase::tick(){
     }
 
     // 승재욱 추가 -> 공과의 위치가 5도 이하면 그대로 멈춤
-    if(fabs(vtheta) < 0.09){
+    if(fabs(vtheta) < 0.2){
         vtheta = 0;
     }
 
