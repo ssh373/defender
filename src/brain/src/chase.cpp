@@ -155,7 +155,7 @@ NodeStatus Chase::tick()
     bool chaseDone = brain->data->ball.range < dist * 1.2 && fabs(toPInPI(kickDir - theta_rb)) < M_PI / 3;
     if (chaseDone){
         brain->tree->setEntry("striker_state", "adjust");
-        log("chase -> adjust")
+        log("chase -> adjust");
     }
 
 
