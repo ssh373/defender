@@ -93,7 +93,7 @@ NodeStatus Adjust::tick(){
     brain->client->setVelocity(vx, vy, vtheta);
 
     // 승재욱 추가
-    bool adjustDone = fabs(deltaDir) < 0.1 && fabs(ballYaw) < 0.1 && ballRange < range + 0.1;
+    bool adjustDone = fabs(deltaDir) <= 0.1 && fabs(ballYaw) <= 0.1 && ballRange < range + 0.1;
     if (adjustDone){
         brain->tree->setEntry("striker_state", "kick");
         log("adjust -> kick");
