@@ -142,11 +142,11 @@ NodeStatus Kick::onStart(){
     double kickAoSafeDist;
     brain->get_parameter("obstacle_avoidance.avoid_during_kick", avoidPushing);
     brain->get_parameter("obstacle_avoidance.kick_ao_safe_dist", kickAoSafeDist);
-    // string role = brain->tree->getEntry<string>("player_role");
+    string role = brain->tree->getEntry<string>("player_role");
     
     if (
         avoidPushing
-        // && (role != "goal_keeper")
+        && (role != "goal_keeper")
         && brain->data->robotPoseToField.x > -(brain->config->fieldDimensions.length / 2 - brain->config->fieldDimensions.goalAreaLength) // 음수 및 부등호 방향 변경 -> 반코트용
         && brain->distToObstacle(brain->data->ball.yawToRobot) < kickAoSafeDist
     ) {

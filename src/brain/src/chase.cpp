@@ -127,6 +127,7 @@ NodeStatus Chase::tick()
             
     double targetDir = atan2(target_r.y, target_r.x);
     double distToObstacle = brain->distToObstacle(targetDir);
+    
     if (avoidObstacle && distToObstacle < oaSafeDist) {
         log("avoid obstacle");
         auto avoidDir = brain->calcAvoidDir(targetDir, oaSafeDist);
@@ -135,6 +136,7 @@ NodeStatus Chase::tick()
         vy = speed * sin(avoidDir);
         vtheta = ballYaw;
     } 
+
     else {
         vx = min(vxLimit, brain->data->ball.range);
         vy = 0;
@@ -160,8 +162,8 @@ NodeStatus Chase::tick()
         brain->tree->setEntry("striker_state", "adjust");
         log("chase -> adjust");
     }
-
-
+    log(format("distToObstacle = %.2f, targetDir = %.2f", distToObstacle, targetDir));
+    
     // brain->client->setVelocity(smoothVx, smoothVy, smoothVtheta, false, false, false);
     brain->client->setVelocity(vx, vy, vtheta, false, false, false);
     return NodeStatus::SUCCESS;
