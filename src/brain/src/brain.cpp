@@ -1104,7 +1104,6 @@ double Brain::distToObstacle(double angle) {
             }
         }
     }
-    }
 
     // Include Robots (Opponents) in avoidance
     auto robots = data->getRobots();
