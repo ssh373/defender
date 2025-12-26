@@ -47,8 +47,10 @@ void BrainTree::initEntry(){
     setEntry<bool>("gc_is_sub_state_kickoff_side", false);
     setEntry<bool>("gc_is_under_penalty", false);
     setEntry<int>("control_state", 3); // control_state == 1 이면 단순 걷기로 (1->3 play.xml test)
+    
     setEntry<string>("decision", "");
     setEntry<bool>("wait_for_opponent_kickoff", false);
+    setEntry<string>("player_role", "striker"); // play.xml (striker / goal_keeper)
 
 
     // 실제 경기 중 상황 
