@@ -1,7 +1,7 @@
 <root BTCPP_format="4">
-    <include path="./subtrees/subtree_cam_find_and_track_ball.xml" />
-    <include path="./subtrees/subtree_locate.xml" />
-    <include path="./subtrees/subtree_striker.xml" />
+    <include path="./subtrees/cam_find_and_track_ball.xml" />
+    <include path="./subtrees/locate.xml" />
+    <include path="./subtrees/striker.xml" />
     
     <BehaviorTree ID="MainTree">
         <Sequence name="root">
@@ -44,7 +44,7 @@
                         </ReactiveSequence>
 
                         <ReactiveSequence _while="gc_game_state=='PLAY'" name="경기 진행 중">
-                            <SubTree ID="StrikerPlay" _autoremap="true" _while="player_role == 'striker'" /> <!-- TODO: 2-->
+                            <SubTree ID="Striker" _autoremap="true" _while="player_role == 'striker'" /> <!-- TODO: 2-->
                             
                         </ReactiveSequence>
 
