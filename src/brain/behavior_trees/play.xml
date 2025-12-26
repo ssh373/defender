@@ -9,12 +9,12 @@
             
             <!-- 수동 보조 모드(state=1), 픽업 후 복귀 모드(state=2) 추후 추가 -->
             
-            <ReactiveSequence _while="control_state==3 && (!go_manual)" name="전략 제어를 위한 상위 스위치 레이어">
+            <ReactiveSequence _while="control_state==3" name="전략 제어를 위한 상위 스위치 레이어">
             
                 <SubTree ID="Locate" _autoremap="true" />
                 <ReactiveSequence _while="gc_is_under_penalty" name="현재 페널티 타임 중이거나 교체 상태">
                     <SetVelocity />
-                    <SubTree ID="CamFindAndTrackBall" _autoremap="true" _while="odom_calibrated" />
+                    <SubTree ID="CamFindAndTrackBall" _autoremap="true" />
                     <SelfLocateEnterField />
                 </ReactiveSequence>
 
