@@ -59,7 +59,7 @@ private:
 
 class DefenderDecide : public SyncActionNode
 {
-public: /* Based on StrikerDecide but for Defender */
+public: 
     DefenderDecide(const string &name, const NodeConfig &config, Brain *_brain) : SyncActionNode(name, config), brain(_brain) {}
 
     static PortsList providedPorts()
