@@ -18,6 +18,7 @@ void RegisterMoveHeadNodes(BT::BehaviorTreeFactory &factory, Brain* brain){
     REGISTER_MOVEHEAD_BUILDER(CamTrackBall) // 카메라로 공 추적
     REGISTER_MOVEHEAD_BUILDER(CamFastScan) // 카메라로 공 찾기
     REGISTER_MOVEHEAD_BUILDER(TurnOnSpot) // 제자리 회전
+    REGISTER_MOVEHEAD_BUILDER(GoBackInField) // 경기장 안으로 복귀
     
 }
 
@@ -210,4 +211,35 @@ NodeStatus TurnOnSpot::onRunning()
     // else 
     brain->client->setVelocity(0, 0, (_angle - _cumAngle)*2, false, false, true); // 인자 추가
     return NodeStatus::RUNNING;
+}
+
+NodeStatus GoBackInField::tick()
+{
+    auto log = [=](string msg) {
+        brain->log->setTimeNow();
+        brain->log->log("debug/GoBackInField", rerun::TextLog(msg));
+    };
+    log("GoBackInField ticked");
+
+    double valve;
+    getInput("valve", valve);
+    double vx = 0; 
+    double vy = 0; 
+    double dir = 0;
+    auto fd = brain->config->fieldDimensions;
+    if (brain->data->robotPoseToField.x > fd.length / 2.0 - valve) dir = - M_PI;
+    else if (brain->data->robotPoseToField.x < - fd.length / 2.0 + valve) dir = 0;
+    else if (brain->data->robotPoseToField.y > fd.width / 2.0 + valve) dir = - M_PI / 2.0;
+    else if (brain->data->robotPoseToField.y < - fd.width / 2.0 - valve) dir = M_PI / 2.0;
+    else { 
+        brain->client->setVelocity(0, 0, 0);
+        return NodeStatus::SUCCESS;
+    }
+
+    
+    double dir_r = toPInPI(dir - brain->data->robotPoseToField.theta);
+    vx = 0.4 * cos(dir_r);
+    vy = 0.4 * sin(dir_r);
+    brain->client->setVelocity(vx, vy, 0, false, false, false);
+    return NodeStatus::SUCCESS;
 }

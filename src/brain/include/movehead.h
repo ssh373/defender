@@ -118,3 +118,22 @@ private:
     rclcpp::Time _timeStart;
     Brain *brain;
 };
+
+// 경기장 안으로 복귀
+class GoBackInField : public SyncActionNode
+{
+public:
+    GoBackInField(const string &name, const NodeConfig &config, Brain *_brain) : SyncActionNode(name, config), brain(_brain) {}
+
+    static PortsList providedPorts()
+    {
+        return {
+            InputPort<double>("valve", 0.5, "경계에서 이 거리만큼 안쪽에 들어오면 정지"),
+        };
+    }
+
+    NodeStatus tick() override;
+
+private:
+    Brain *brain;
+};
