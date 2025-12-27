@@ -521,19 +521,7 @@ void BrainCommunication::spinCommunicationReceiver() {
         //     continue;
         // }
 
-        /* ---------------- 로그 출력 (디버깅용) ---------------- */
-        // TMID: 팀원 ID
-        // MyPos: 나의 필드 좌표 (x, y)
-        // TmPos: 팀원이 보내준 팀원의 필드 좌표 (x, y)
-        // Dist: 나와 팀원 사이의 거리 (이 값이 3.0m 이내면 Rerun에서 Teammate로 표시됨)
-        double dist = sqrt(pow(brain->data->robotPoseToField.x - msg.robotPoseToField.x, 2) + pow(brain->data->robotPoseToField.y - msg.robotPoseToField.y, 2));
-        cout << GREEN_CODE << format(
-            "TMID: %d | MyPos: (%.2f, %.2f) | TmPos: (%.2f, %.2f) | Dist: %.2f", 
-            msg.playerId, 
-            brain->data->robotPoseToField.x, brain->data->robotPoseToField.y,
-            msg.robotPoseToField.x, msg.robotPoseToField.y,
-            dist
-            ) << RESET_CODE << endl;
+
 
         /* ---------------- 데이터 업데이트 ---------------- */
         // 수신된 패킷 내용을 BrainData의 tmStatus에 저장합니다.
