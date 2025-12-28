@@ -11,6 +11,7 @@
 
 void RegisterKickNodes(BT::BehaviorTreeFactory &factory, Brain* brain){
     REGISTER_KICK_BUILDER(CalcKickDir)
+    REGISTER_KICK_BUILDER(CalcKickDirWithGoalkeeper)
     REGISTER_KICK_BUILDER(CalcPassDir)
     REGISTER_KICK_BUILDER(Kick)
 }
@@ -89,6 +90,102 @@ NodeStatus CalcKickDir::tick(){
             .with_colors({color})
             .with_radii(0.01)
             .with_draw_order(31)
+    );
+
+    return NodeStatus::SUCCESS;
+}
+
+NodeStatus CalcKickDirWithGoalkeeper::tick(){
+    double crossThreshold;
+    double goalkeeperMargin;
+    getInput("cross_threshold", crossThreshold);
+    getInput("goalkeeper_margin", goalkeeperMargin);
+
+    auto bPos = brain->data->ball.posToField;
+    auto fd = brain->config->fieldDimensions;
+    auto color = 0xFFFFFFFF;
+
+    // 1. 골키퍼(장애물) 찾기
+    vector<GameObject> obstacles = brain->data->getObstacles();
+    vector<GameObject> goalkeepers;
+    
+    // 골대 주변에 있는 장애물만 골키퍼 후보로 간주
+    double goalX = (brain->config->fieldDimensions.length / 2);
+    goalX = - (brain->config->fieldDimensions.length / 2); 
+
+    for(const auto& obs : obstacles){
+        // 골대 근처 (페널티 박스 + margin)에 있는 로봇을 골키퍼로 인식
+        if(obs.posToField.x < goalX + fd.goalAreaLength + goalkeeperMargin){goalkeepers.push_back(obs);}
+    }
+
+    // 공 -> 왼쪽 포스트 각도(thetal), 공 -> 오른쪽 포스트 각도(thetar), 골키퍼가 이 사이에 있으면 각도를 좁혀야 함.
+    double bestKickDir = 0.0;
+    bool isBlocked = false;
+    double maxOpenAngle = 0.0;
+    string kickType = "shoot";
+
+    // 골키퍼 없으면 기존 로직대로 그냥 킥
+    if (goalkeepers.empty()) { bestKickDir = atan2(0 - bPos.y, goalX - bPos.x);} 
+    // 골키퍼가 있다면        
+    else {        
+        vector<pair<double, double>> blockedIntervals;
+        for(const auto& gk : goalkeepers){
+            double dist = norm(gk.posToField.x - bPos.x, gk.posToField.y - bPos.y);
+            double angleToGK = atan2(gk.posToField.y - bPos.y, gk.posToField.x - bPos.x);
+            double angularWidth = atan2(goalkeeperMargin, dist);
+            blockedIntervals.push_back({angleToGK - angularWidth, angleToGK + angularWidth});
+        }
+        
+        double angleLeftPost = atan2(fd.goalWidth/2 - bPos.y, goalX - bPos.x);
+        double angleRightPost = atan2(-fd.goalWidth/2 - bPos.y, goalX - bPos.x);
+    
+        auto gk = goalkeepers[0];
+        double gkAngle = atan2(gk.posToField.y - bPos.y, gk.posToField.x - bPos.x);
+        double angleToGoalCenter = atan2(0 - bPos.y, goalX - bPos.x);
+        
+        double diff = gkAngle - angleToGoalCenter;
+        while(diff > M_PI) diff -= 2*M_PI;
+        while(diff < -M_PI) diff += 2*M_PI;
+        
+        // 골키퍼가 중심보다 왼쪽에 있음(diff > 0) -> 오른쪽 포스트 쪽으로 슛
+        if(diff > 0) {
+            bestKickDir = angleRightPost + (angleToGoalCenter - angleRightPost) * 0.5; // 오른쪽 절반의 중간
+        } else {
+            bestKickDir = angleLeftPost + (angleToGoalCenter - angleLeftPost) * 0.5; // 왼쪽 절반의 중간
+        }
+        
+        // 만약 골키퍼가 너무 중앙이라 양쪽 다 좁다 or thetal - thetar 자체가 작다면 -> 여기서 바로 cross로 가도 좋을듯
+    }
+
+    // 최종 결정
+    double angleLeftPost = atan2(fd.goalWidth/2 - bPos.y, goalX - bPos.x);
+    double angleRightPost = atan2(-fd.goalWidth/2 - bPos.y, goalX - bPos.x);
+    
+    double angleDiff = angleLeftPost - angleRightPost;
+    while(angleDiff > M_PI) angleDiff -= 2*M_PI;
+    while(angleDiff < -M_PI) angleDiff += 2*M_PI;
+    
+    double goalVisibleAngle = fabs(angleDiff);
+
+    brain->data->kickDir = bestKickDir;
+
+    // 만약 골문이 너무 좁거나(crossThreshold), 확실한 슛 각이 안나오면 cross psss가 된다면 pass로 수정
+     if (goalVisibleAngle < crossThreshold) {
+        kickType = "cross";
+        color = 0xFF00FFFF;
+     }
+    
+    brain->data->kickType = kickType;
+
+    // 시각화
+    brain->log->setTimeNow();
+    brain->log->log(
+        "field/kick_dir_gk",
+        rerun::Arrows2D::from_vectors({{10 * cos(brain->data->kickDir), -10 * sin(brain->data->kickDir)}})
+            .with_origins({{brain->data->ball.posToField.x, -brain->data->ball.posToField.y}})
+            .with_colors({color}) 
+            .with_radii(0.015) 
+            .with_draw_order(32)
     );
 
     return NodeStatus::SUCCESS;

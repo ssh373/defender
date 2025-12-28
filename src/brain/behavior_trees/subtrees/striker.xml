@@ -34,12 +34,10 @@
                   <SubTree ID="CamFindAndTrackBall" _autoremap="true" />
                   
                   <!-- 킥 방향 개선 (골키퍼 고려) -->
-                  <!-- TODO 1 : CalcKickDirWithGoalkeeper 구현 후 교체 -->
-                  <CalcKickDir cross_threshold="0.5" />
-                  <!-- <CalcKickDirWithGoalkeeper cross_threshold="0.5" goalkeeper_margin="0.3" /> -->
+                  <CalcKickDirWithGoalkeeper cross_threshold="0.5" goalkeeper_margin="0.5" />
                   
                   <Sequence>
-                     <!-- 의사결정 TODO 2 : 원터치 구현 후 추가) -->
+                     
                      <ReactiveSequence>
                         <StrikerDecide decision_out="{decision}" decision_in="{decision}" chase_threshold="1.0" /> <!-- one_touch_enabled="true" 원터치 활성화 -->
                         
@@ -61,7 +59,7 @@
                      <Kick _while="decision == 'kick'" speed_limit="0.8" min_msec_kick="1000" msecs_stablize="1000" />
                      
                      <!-- 원터치 킥 (세트피스 킥) -->
-                     <Kick _while="decision == 'one_touch'" speed_limit="1.0" min_msec_kick="300" />
+                     <Kick _while="decision == 'one_touch'" speed_limit="1.0" min_msec_kick="300" msecs_stablize="100" />
                      
                      <!-- Cross (측면 패스) -->
                      <Kick _while="decision == 'cross'" speed_limit="0.4" min_msec_kick="300" />

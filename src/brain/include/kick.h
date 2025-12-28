@@ -27,6 +27,21 @@ public:
     NodeStatus tick() override;
 
 private:
+    Brain *brain;
+};
+
+// 공과 골대와의 각도를 계산하여 킥 방향을 결정하는 노드
+class CalcKickDirWithGoalkeeper : public SyncActionNode {
+public:
+    CalcKickDirWithGoalkeeper(const string &name, const NodeConfig &config, Brain *_brain) : SyncActionNode(name, config), brain(_brain) {}
+
+    static PortsList providedPorts(){
+        return {
+            InputPort<double>("cross_threshold", 0.2, "득점 가능한 각도 범위가 이 값보다 작으면 크로스(패스)로 전환"),
+            InputPort<double>("goalkeeper_margin", 0.3, "골키퍼 회피 마진 (m)")
+        };
+    }
+
     NodeStatus tick() override;
 
 private:
