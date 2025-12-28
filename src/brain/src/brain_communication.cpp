@@ -1,10 +1,12 @@
 #include "brain.h"
 #include "brain_communication.h"
 
+// BrainCommunication 생성자 -> Brain 객체 포인터를 멤버 변수에 저장
 BrainCommunication::BrainCommunication(Brain *argBrain) : brain(argBrain)
 {
 }
 
+// BrainCommunication 소멸자 -> 모든 통신 리소스 정리
 BrainCommunication::~BrainCommunication()
 {
     clearupGameControllerUnicast();
@@ -15,6 +17,7 @@ BrainCommunication::~BrainCommunication()
 }
 
 
+// 전체 통신 모듈 초기화 -> 활성화되면 GameController, Discovery, Unicast 초기화 진행
 void BrainCommunication::initCommunication()
 {
     initGameControllerUnicast();
@@ -36,6 +39,7 @@ void BrainCommunication::initCommunication()
 }
     
 
+// GameController와의 통신(Unicast)을 위한 소켓 생성 및 스레드 시작
 void BrainCommunication::initGameControllerUnicast()
 {
     try
@@ -64,6 +68,7 @@ void BrainCommunication::initGameControllerUnicast()
     }
 }
 
+// GameController 통신 종료 -> 소켓 닫기 및 스레드 조인
 void BrainCommunication::clearupGameControllerUnicast()
 {
     _unicast_gamecontrol_flag = false;
@@ -80,6 +85,7 @@ void BrainCommunication::clearupGameControllerUnicast()
     }
 }
 
+// 팀원 탐색(Discovery) 메시지 브로드캐스팅 초기화 -> 브로드캐스트 소켓 생성 및 송신 스레드 시작
 void BrainCommunication::initDiscoveryBroadcast()
 {
     try
@@ -118,6 +124,7 @@ void BrainCommunication::initDiscoveryBroadcast()
     
 }
 
+// Discovery 브로드캐스팅 종료 -> 소켓 닫기 및 스레드 조인
 void BrainCommunication::clearupDiscoveryBroadcast()
 {
     _broadcast_discovery_flag = false;
@@ -135,6 +142,7 @@ void BrainCommunication::clearupDiscoveryBroadcast()
     }
 }
 
+// Discovery 수신 초기화 -> 수신용 UDP 소켓 생성 및 수신 스레드 시작
 void BrainCommunication::initDiscoveryReceiver()
 {
     try
@@ -181,6 +189,7 @@ void BrainCommunication::initDiscoveryReceiver()
     }
 }
 
+// Discovery 수신 종료 -> 소켓 닫기 및 스레드 조인
 void BrainCommunication::clearupDiscoveryReceiver()
 {
     _receive_discovery_flag = false;
@@ -197,6 +206,7 @@ void BrainCommunication::clearupDiscoveryReceiver()
     }
 }
 
+// GameController에 로봇의 상태(ALIVE, 팀, ID 등)를 주기적으로 전송하는 스레드 함수
 void BrainCommunication::unicastToGameController() {
     while (_unicast_gamecontrol_flag)
     {
@@ -216,6 +226,7 @@ void BrainCommunication::unicastToGameController() {
     }
 }
 
+// Discovery 메시지를 주기적으로 브로드캐스트하여 자신의 존재를 알리는 스레드 함수
 void BrainCommunication::broadcastDiscovery() {
     while (_broadcast_discovery_flag)
     {
@@ -245,6 +256,7 @@ void BrainCommunication::broadcastDiscovery() {
     } 
 }
 
+// Discovery 메시지 수신 및 팀원 IP 식별 스레드 함수 -> 팀원의 IP 주소를 파악하여 Unicast 목록에 추가
 void BrainCommunication::spinDiscoveryReceiver() {    
     sockaddr_in addr{};
     socklen_t addr_len = sizeof(addr);
@@ -305,6 +317,7 @@ void BrainCommunication::spinDiscoveryReceiver() {
     }
 }
 
+// 만료된 팀원 제거 -> 일정 시간 동안 응답이 없는 팀원을 목록에서 삭제
 void BrainCommunication::cleanupExpiredTeammates() {
     std::lock_guard<std::mutex> lock(_teammate_addresses_mutex);    
     for (auto it = _teammate_addresses.begin(); it != _teammate_addresses.end();) {
@@ -319,6 +332,7 @@ void BrainCommunication::cleanupExpiredTeammates() {
     }
 }
 
+// 팀원 간 Unicast 통신 초기화 -> 송신 소켓 생성 및 스레드 시작
 void BrainCommunication::initCommunicationUnicast() {
     try
     {
@@ -343,6 +357,7 @@ void BrainCommunication::initCommunicationUnicast() {
     
 }
 
+// 실제 팀원 통신 수행 -> 주기적으로 자신의 상태(공 위치, 역할, 비용 등)를 식별된 팀원들에게 Unicast 전송
 void BrainCommunication::unicastCommunication() {
     auto log = [=](string msg) {
         brain->log->setTimeNow();
@@ -392,6 +407,7 @@ void BrainCommunication::unicastCommunication() {
     }
 }
 
+// Unicast 통신 종료 -> 소켓 닫기 및 스레드 조인
 void BrainCommunication::clearupCommunicationUnicast() {
     _unicast_communication_flag = false;
     if (_unicast_socket >= 0) {
@@ -406,6 +422,7 @@ void BrainCommunication::clearupCommunicationUnicast() {
     }
 }
 
+// 팀원 데이터 수신 초기화 -> 수신용 UDP 소켓 생성 및 스레드 시작
 void BrainCommunication::initCommunicationReceiver() {
     try
     {
@@ -448,6 +465,7 @@ void BrainCommunication::initCommunicationReceiver() {
     }
 }
 
+// 팀원 데이터 수신 스레드 -> 수신된 데이터를 파싱하여 BrainData(공유 메모리)에 저장
 void BrainCommunication::spinCommunicationReceiver() {
     auto log = [=](string msg) {
         brain->log->setTimeNow();
@@ -513,9 +531,7 @@ void BrainCommunication::spinCommunicationReceiver() {
             continue;
         }
 
-        // 교체 선수(Substitute) 체크 로직
-        // 실제 경기에서는 교체 선수의 정보가 전술에 방해가 되므로 무시하지만,
-        // 현재 테스트 중에는 GameController 설정 없이도 통신을 확인하기 위해 주석 처리함.
+        // 교체 선수(Substitute) 체크 로직 -> 실제 경기에서는 교체 선수의 정보가 전술에 방해가 되므로 무시되지만 테스트 중에는 GameController 설정 없이도 통신을 확인하기 위해 주석 처리
         // if (brain->data->penalty[tmIdx] == SUBSTITUTE) { 
         //     cout << YELLOW_CODE << format("Communication playerId %d is substitute", msg.playerId) << RESET_CODE << endl;
         //     continue;
@@ -524,8 +540,7 @@ void BrainCommunication::spinCommunicationReceiver() {
 
 
         /* ---------------- 데이터 업데이트 ---------------- */
-        // 수신된 패킷 내용을 BrainData의 tmStatus에 저장
-        // 이 데이터는 전략(누가 공을 찰지)과 시각화(Rerun에서 Teammate 표시)에 사용
+        // 수신된 패킷 내용을 BrainData의 tmStatus에 저장 -> 이 데이터는 전략(누가 공을 찰지)과 시각화(Rerun에서 Teammate 표시)에 사용됨
         TMStatus &tmStatus = brain->data->tmStatus[tmIdx];
         
         tmStatus.role = msg.playerRole == 1 ? "striker" : "goal_keeper"; // 역할
@@ -555,6 +570,7 @@ void BrainCommunication::spinCommunicationReceiver() {
     }
 }
 
+// 팀원 데이터 수신 종료 -> 소켓 닫기 및 스레드 조인
 void BrainCommunication::clearupCommunicationReceiver() {
     _receive_communication_flag = false;
     if (_communication_recv_socket >= 0) {
