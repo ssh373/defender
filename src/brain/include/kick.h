@@ -20,7 +20,7 @@ public:
 
     static PortsList providedPorts(){
         return {
-            InputPort<double>("cross_threshold", 0.2, "可进门的角度范围小于这个值时, 则传中")
+            InputPort<double>("cross_threshold", 0.2, "득점 가능한 각도 범위가 이 값보다 작으면 크로스(패스)로 전환")
         };
     }
 
@@ -57,9 +57,9 @@ public:
     static PortsList providedPorts()
     {
         return {
-            InputPort<double>("min_msec_kick", 500, "踢球动作最少执行多少毫秒"),
-            InputPort<double>("msecs_stablize", 1000, "稳定多少毫秒"),
-            InputPort<double>("speed_limit", 0.8, "速度最大值"),
+            InputPort<double>("min_msec_kick", 500, "킥 동작을 최소한 이 시간(ms) 동안 실행"),
+            InputPort<double>("msecs_stablize", 1000, "동작 안정화를 위해 정지 상태로 유지하는 시간(ms)"),
+            InputPort<double>("speed_limit", 0.8, "속도의 최대값"),
         };
     }
 

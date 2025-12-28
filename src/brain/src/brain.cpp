@@ -212,12 +212,12 @@ void Brain::loadConfig(){
     config->camAngleX = deg2rad(camDegX);  // 라디안으로 변환
     config->camAngleY = deg2rad(camDegY);  // 라디안으로 변환
 
-    // 从视觉 config 中加载相关参数
+    // 비전 config 로드
     string visionConfigPath, visionConfigLocalPath;  // 비전 설정 파일 경로 변수 선언
     get_parameter("vision_config_path", visionConfigPath);  // 글로벌 설정 파일 경로 읽기
     get_parameter("vision_config_local_path", visionConfigLocalPath);  // 로컬 덮어쓰기 설정 파일 경로 읽기
     if (!filesystem::exists(visionConfigPath)) {  // 파일 존재 확인
-        // 报错然后退出
+        // 파일이 없으면 에러 로그 출력하고 프로그램 종료
         RCLCPP_ERROR(get_logger(), "vision_config_path %s not exists", visionConfigPath.c_str());  // 에러 로그 출력
         exit(1);  // 비전 설정이 없으면 프로그램 종료
     }
@@ -277,7 +277,8 @@ double Brain::msecsSince(rclcpp::Time time){
 /* ------------------------- ROS Callback 관련 함수 구현 -------------------------------*/
 void Brain::gameControlCallback(const game_controller_interface::msg::GameControlData &msg){
     data->timeLastGamecontrolMsg = get_clock()->now();
-    // 处理比赛的一级状态 
+    // 경기의 1차(상위) 상태 처리
+
     auto lastGameState = tree->getEntry<string>("gc_game_state"); // 比赛的一级状态
     vector<string> gameStateMap = {
         "INITIAL", // 초기 상태, 선수는 경기장 밖에서 대기
@@ -451,7 +452,7 @@ void Brain::detectionsCallback(const vision_interface::msg::Detections &msg){
     // Store persons for avoidance even if not treated as robots
     data->setPersons(persons);
 
-    // 处理并记录视野信息
+    // 시야 정보 처리 및 로깅
     detection_utils::detectProcessVisionBox(msg, data);
 
     // 로그 기록
@@ -801,21 +802,21 @@ void Brain::imageCallback(const sensor_msgs::msg::Image &msg){
             cv::Mat yuv(msg.height + msg.height / 2, msg.width, CV_8UC1, const_cast<uint8_t*>(msg.data.data()));
             cv::cvtColor(yuv, image, cv::COLOR_YUV2BGR_NV12);
         } else if (msg.encoding == "bgra8") {
-            // 创建 OpenCV Mat 对象，处理 BGRA 格式图像
+            // BGRA 이미지 처리
             image = cv::Mat(msg.height, msg.width, CV_8UC4, const_cast<uint8_t *>(msg.data.data()));
             cv::Mat imageBGR;
-            // 将 BGRA 转换为 BGR，忽略 Alpha 通道
+            // BGRA를 BGR로 변환하고 Alpha 채널은 무시
             cv::cvtColor(image, imageBGR, cv::COLOR_BGRA2BGR);
             image = imageBGR;
         } else if (msg.encoding == "bgr8") {
-            // 原有 BGR8 处理逻辑
+            // BGR 이미지 처리
             image = cv::Mat(msg.height, msg.width, CV_8UC3, const_cast<uint8_t *>(msg.data.data()));
         } else if (msg.encoding == "rgb8") {
-            // 原有 RGB8 处理逻辑
+            // RGB 이미지 처리
             image = cv::Mat(msg.height, msg.width, CV_8UC3, const_cast<uint8_t *>(msg.data.data()));
             cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
         } else {
-            // 处理其他编码格式，或者记录错误日志
+            // 지원하지 않는 이미지 인코딩
             prtErr(format("Unsupported image encoding: %s", msg.encoding.c_str()));
             return;
         }
@@ -1288,46 +1289,46 @@ void Brain::logObstacles() {
 
 void Brain::logDepth(int grid_x_count, int grid_y_count, vector<vector<int>> &grid_occupied, vector<rerun::Vec3D> &points_robot) {
     // time is set on the outside
-    const double grid_size = get_parameter("depth_obstacle_preprocessing.grid_size").as_double();  // 网格大小
+    const double grid_size = get_parameter("depth_obstacle_preprocessing.grid_size").as_double();  // 网格 크기
     const double x_min = 0.0, x_max = get_parameter("depth_obstacle_preprocessing.max_x").as_double();
     const double y_min = -get_parameter("depth_obstacle_preprocessing.max_y").as_double();
     const double y_max = -y_min;
 
-    // 记录原始点云和网格
+    // 원본 포인트 클라우드와 그리드 정보 로깅
     vector<rerun::Position3D> vertices;
     vector<rerun::Color> vertex_colors;
     vector<array<uint32_t, 3>> triangle_indices;
-    const int OCCUPANCY_THRESHOLD = get_parameter("obstacle_avoidance.occupancy_threshold").as_int(); // 设置一个显示用的阈值
+    const int OCCUPANCY_THRESHOLD = get_parameter("obstacle_avoidance.occupancy_threshold").as_int(); // 설정된 임계값
 
     for (int i = 0; i < grid_x_count; i++) {
         for (int j = 0; j < grid_y_count; j++) {
             if (grid_occupied[i][j] > 0) {
-                // 计算有障碍网格的四个顶点坐标
+                // 그리드의 4개의 꼭짓점 좌표 계산
                 double x0 = x_min + i * grid_size;
                 double y0 = y_min + j * grid_size;
                 double x1 = x0 + grid_size;
                 double y1 = y0 + grid_size;
 
-                // 添加四个顶点
+                // 4개의 꼭짓점 좌표 추가
                 uint32_t base_index = vertices.size();
                 vertices.push_back({x0, y0, 0.0});
                 vertices.push_back({x1, y0, 0.0});
                 vertices.push_back({x1, y1, 0.0});
                 vertices.push_back({x0, y1, 0.0});
 
-                // 设置颜色：根据占用情况设置不同的红色
+                // 그리드의 색상 설정
                 rerun::Color color;
                 if (grid_occupied[i][j] > OCCUPANCY_THRESHOLD) {
-                    color = rerun::Color(255, 0, 0, 255);  // RGBA, 红色
+                    color = rerun::Color(255, 0, 0, 255);  // RGBA, 빨간색
                 } else {
-                    color = rerun::Color(255, 255, 0, 255);  // RGBA, 黄色
+                    color = rerun::Color(255, 255, 0, 255);  // RGBA, 노란색
                 }
                 vertex_colors.push_back(color);
                 vertex_colors.push_back(color);
                 vertex_colors.push_back(color);
                 vertex_colors.push_back(color);
 
-                // 添加两个三角形面
+                // 2개의 삼각형 면 추가
                 triangle_indices.push_back({base_index, base_index + 1, base_index + 2});
                 triangle_indices.push_back({base_index, base_index + 2, base_index + 3});
             }
@@ -1367,14 +1368,14 @@ void Brain::logDepth(int grid_x_count, int grid_y_count, vector<vector<int>> &gr
         rerun::Boxes3D::from_centers_and_half_sizes(
             {{ data->ball.posToRobot.x, data->ball.posToRobot.y, h/2}},
             {{ r, r, h/2}})
-        .with_colors(0x00FF0044)     // 半透明绿色 
+        .with_colors(0x00FF0044)    // 반투명 초록색
     );
 }
 
 bool Brain::isAngleGood(double goalPostMargin, string type) {
     double angle = 0;
-    if (type == "kick") angle = data->robotBallAngleToField; // type=="kick" 机器人到球, field 坐标系中的方向
-    if (type == "shoot") angle = data->robotPoseToField.theta; // type=="shoot" 机器人朝向
+    if (type == "kick") angle = data->robotBallAngleToField; // type == "kick": 로봇 → 공 방향 벡터 (필드 좌표계)
+    if (type == "shoot") angle = data->robotPoseToField.theta; // type == "shoot": 로봇의 전방 방향 (필드 좌표계)
     
 
     auto goalPostAngles = getGoalPostAngles(goalPostMargin);
