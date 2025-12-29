@@ -50,7 +50,7 @@ void BrainTree::initEntry(){
     
     setEntry<string>("decision", ""); // pass / chase / adjust / kick / assist 더 추가 예정
     setEntry<bool>("wait_for_opponent_kickoff", false);
-    setEntry<string>("player_role", "striker"); // play.xml (striker / defender / goal_keeper)
+    setEntry<string>("player_role", brain->config->playerRole); // play.xml (striker / defender / goal_keeper)
 
 
     // 실제 경기 중 상황 
