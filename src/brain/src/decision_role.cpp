@@ -245,8 +245,14 @@ NodeStatus DefenderDecide::tick() {
     // 2. 추적 거리 밖이면 -> chase
     else if (ballRange > chaseRangeThreshold * (lastDecision == "chase" ? 0.9 : 1.0))
     {
-        newDecision = "chase";
-        color = 0x0000FFFF;
+        // 수비수는 쫓아가지 않고 대기 -> 당장은 pass 이후 등에서 활용됨
+        if (brain->data->ball.posToField.x < -1.0) {
+            newDecision = "wait";
+            color = 0x00FFFFFF; // Cyan/White mix
+        } else {
+            newDecision = "chase";
+            color = 0x0000FFFF;
+        }
     } 
     // 3. 킥 조건 만족하면 -> kick(패스)
     else if (
