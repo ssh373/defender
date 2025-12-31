@@ -61,9 +61,9 @@ int RobotClient::waveHand(bool doWaveHand)
 
 int RobotClient::setVelocity(double x, double y, double theta, bool applyMinX, bool applyMinY, bool applyMinTheta)
 {
-    //brain->log->setTimeNow();
-    //brain->log->log("RobotClient/setVelocity_in",
-    //                rerun::TextLog(format("vx: %.2f  vy: %.2f  vtheta: %.2f", x, y, theta)));
+    brain->log->setTimeNow();
+    brain->log->log("RobotClient/setVelocity_in",
+                   rerun::TextLog(format("vx: %.2f  vy: %.2f  vtheta: %.2f", x, y, theta)));
 
     // 速度指令太小时, 给一个最小速度, 以防止不响应 TODO 转为参数化
     double minx = 0.05, miny = 0.08, mintheta = 0.05;
@@ -78,53 +78,53 @@ int RobotClient::setVelocity(double x, double y, double theta, bool applyMinX, b
     theta = cap(theta, brain->config->vthetaLimit, -brain->config->vthetaLimit);
     
     // // log simulated path based on velocity
-    // vector<Pose2D> path = {{0, 0, 0}}; // 坐标系是以机器人的位置为 0,0, linear 速度方向为 theta = 0 的坐标系
-    // double v = norm(x, y);
-    // double simStep = 1e-1; double simLength = 5.;
-    // for (int i = 0; i < simLength/simStep; i++) {
-    //     double dt = simStep * (i + 1);
-    //     if (fabs(theta) < 1e-3) path.push_back({v * dt, 0, 0});
-    //     else path.push_back({v/theta * sin(theta * dt), v/theta * (1 - cos(theta * dt)), theta * dt});
-    // }
-    // vector<Pose2D> path_f = {};
-    // for (int i = 0; i < path.size(); i++) {
-    //     auto p = trans(
-    //         path[i].x, path[i].y, path[i].theta, 
-    //         brain->data->robotPoseToField.x, 
-    //         brain->data->robotPoseToField.y, 
-    //         brain->data->robotPoseToField.theta + atan2(y, x), 
-    //         "back"
-    //     );
-    //     path_f.push_back({p[0], -p[1], -p[2]});
-    // }
+    vector<Pose2D> path = {{0, 0, 0}}; // 坐标系是以机器人的位置为 0,0, linear 速度方向为 theta = 0 的坐标系
+    double v = norm(x, y);
+    double simStep = 1e-1; double simLength = 5.;
+    for (int i = 0; i < simLength/simStep; i++) {
+        double dt = simStep * (i + 1);
+        if (fabs(theta) < 1e-3) path.push_back({v * dt, 0, 0});
+        else path.push_back({v/theta * sin(theta * dt), v/theta * (1 - cos(theta * dt)), theta * dt});
+    }
+    vector<Pose2D> path_f = {};
+    for (int i = 0; i < path.size(); i++) {
+        auto p = trans(
+            path[i].x, path[i].y, path[i].theta, 
+            brain->data->robotPoseToField.x, 
+            brain->data->robotPoseToField.y, 
+            brain->data->robotPoseToField.theta + atan2(y, x), 
+            "back"
+        );
+        path_f.push_back({p[0], -p[1], -p[2]});
+    }
     
-    // vector<rerun::components::Vector2D> vectors = {};
-    // vector<rerun::components::Position2D> origins = {};
-    // vector<rerun::components::Color> colors;
-    // for (int i = 1; i < path_f.size(); i++) {
-    //     auto p0 = path_f[i-1];
-    //     auto p1 = path_f[i];
-    //     origins.push_back({p0.x, p0.y});
-    //     vectors.push_back({p1.x - p0.x, p1.y - p0.y});
-    //     colors.push_back({0, 0, 255 * (1 - i / path_f.size() / 2.0)});
-    // }
+    vector<rerun::components::Vector2D> vectors = {};
+    vector<rerun::components::Position2D> origins = {};
+    vector<rerun::components::Color> colors;
+    for (int i = 1; i < path_f.size(); i++) {
+        auto p0 = path_f[i-1];
+        auto p1 = path_f[i];
+        origins.push_back({p0.x, p0.y});
+        vectors.push_back({p1.x - p0.x, p1.y - p0.y});
+        colors.push_back({0, 0, 255 * (1 - i / path_f.size() / 2.0)});
+    }
 
-    // if (path_f.size() > 0) {
-    //     auto p = path_f[0];
-    //     brain->log->log(
-    //         "field/velocity",
-    //         rerun::Arrows2D::from_vectors({{v * cos(p.theta), v * sin(p.theta)}})
-    //             .with_origins({{p.x, p.y}})
-    //             .with_colors(0xCCCCCCFF)
-    //             .with_radii(0.005)
-    //             .with_draw_order(40)
-    //     );
-    // }
+    if (path_f.size() > 0) {
+        auto p = path_f[0];
+        brain->log->log(
+            "field/velocity",
+            rerun::Arrows2D::from_vectors({{v * cos(p.theta), v * sin(p.theta)}})
+                .with_origins({{p.x, p.y}})
+                .with_colors(0xCCCCCCFF)
+                .with_radii(0.005)
+                .with_draw_order(40)
+        );
+    }
     _vx = x; _vy = y; _vtheta = theta; // 마지막으로 보낸 명령을 기억한다. 현재 로봇의 속도로 근사해서 사용할 수 있다.
     _lastCmdTime = brain->get_clock()->now();
     if (fabs(_vx) > 1e-3 || fabs(_vy) > 1e-3 || fabs(_vtheta) > 1e-3) _lastNonZeroCmdTime = brain->get_clock()->now();
-    //brain->log->log("RobotClient/setVelocity_out",
-    //    rerun::TextLog(format("vx: %.2f  vy: %.2f  vtheta: %.2f", x, y, theta)));
+    brain->log->log("RobotClient/setVelocity_out",
+       rerun::TextLog(format("vx: %.2f  vy: %.2f  vtheta: %.2f", x, y, theta)));
     return call(booster_interface::CreateMoveMsg(x, y, theta));
 }
 
