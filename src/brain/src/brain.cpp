@@ -183,7 +183,7 @@ void Brain::loadConfig(){
     // 전략 관련 파라미터 
     get_parameter("strategy.ball_confidence_threshold", config->ballConfidenceThreshold);  // 공 탐지 신뢰도 임계값
     get_parameter("strategy.tm_ball_dist_threshold", config->tmBallDistThreshold);
-    
+
     // chase 관련 파라미터
     get_parameter("chase.limit_near_ball_speed", config->limitNearBallSpeed);
     get_parameter("chase.near_ball_speed_limit", config->nearBallSpeedLimit);
@@ -1515,7 +1515,7 @@ void Brain::handleCooperation() {
         }
     }
 		
-		// 역할 스위칭 (config에서 on off 가능)
+        // 역할 스위칭 (config에서 on off 가능)
     // 팀원 수가 덜 차면 striker로
     bool switchRole;
     get_parameter("strategy.cooperation.enable_role_switch", switchRole);

@@ -27,7 +27,7 @@ brain_node:
       # 통신 처리
       tm_ball_dist_threshold: 2.0 
       cooperation: 
-        enable_role_switch: false 
+        enable_role_switch: false
         ball_control_cost_threshold: 20.0 
       
     chase:  
