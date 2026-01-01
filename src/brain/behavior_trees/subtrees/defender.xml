@@ -48,7 +48,7 @@
                      <!-- 행동 실행 -->
                      <SetVelocity _while="!is_lead" />
                      <!-- Chase -->
-                     <Chase _while="decision == 'chase' && !is_lead" vx_limit="0.9" vy_limit="0.2" vtheta_limit="1.0" dist="0.1" safe_dist="0.5" />
+                     <Chase _while="decision == 'chase' && is_lead" vx_limit="0.9" vy_limit="0.2" vtheta_limit="1.0" dist="0.1" safe_dist="0.5" />
                      
                      <!-- Adjust -->
                      <Adjust _while="decision == 'adjust' && is_lead" turn_threshold="0.5" range="0.4" vx_limit="0.7" vy_limit="0.6" vtheta_limit="1.5" vtheta_factor="1.5" tangential_speed_far="0.7" tangential_speed_near="0.15" />
