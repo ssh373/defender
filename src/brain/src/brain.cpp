@@ -264,7 +264,8 @@ void Brain::loadConfig(){
 
 void Brain::tick(){ 
     updateBallMemory(); // 공 위치 기억 업데이트
-    updateObstacleMemory(); // obstacle 기억 업데이트 
+    updateObstacleMemory(); // obstacle 기억 업데이트
+    handleCooperation() 
     
     tree->tick(); 
 }
