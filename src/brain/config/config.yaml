@@ -2,7 +2,7 @@ brain_node:
   ros__parameters:
     game:
       team_id: 100 
-      player_id: 2 # 1 | 2 | 3 | 4 | 5
+      player_id: 1 # 1 | 2 | 3 | 4 | 5
       field_type: "inha_size" # kid_size | adult_size | inha_size
       player_role: "defender" # striker | defender | goal_keeper
       treat_person_as_robot: false 
@@ -77,7 +77,7 @@ brain_node:
 
     rerunLog:
       enable_tcp: true # 리런에 연결 할 지
-      server_ip: "192.168.50.221:9876" 
+      server_ip: "192.168.50.19:9876" 
       enable_file: true  # 리런 로그 파일을 만들지
       log_dir: "/home/booster/Workspace/rrlog" # 리런 로그 파일 저장 경로
       max_log_file_mins: 5.0 # 리런 로그 파일 최대 길이 (분)
