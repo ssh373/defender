@@ -517,18 +517,34 @@ NodeStatus SelfLocateEnterField::tick()
     string logPath = res.success ? "debug/locator_enter_field/success" : "debug/locator_enter_field/fail";
     log(
             format(
-                "%s left success: %d  left residual: %.2f  right success %d  right residual %.2f resTolerance: %.2f markers: %d minMarkerCnt: %d ",
+                "%s left success: %d  left residual:  %.2f left code: %d right success %d  right residual %.2f right code: %d resTolerance: %.2f markers: %d minMarkerCnt: %d ",
                 report.c_str(),
                 resLeft.success, 
                 resLeft.residual,
+                resLeft.code,
                 resRight.success,
                 resRight.residual,
+                resRight.code,
                 brain->locator->residualTolerance,
                 markers.size(),
                 brain->locator->minMarkerCnt
             ),
             res.success
         );
+    // log(
+    //         format(
+    //             "%s left success: %d  left residual: %.2f  right success %d  right residual %.2f resTolerance: %.2f markers: %d minMarkerCnt: %d ",
+    //             report.c_str(),
+    //             resLeft.success, 
+    //             resLeft.residual,
+    //             resRight.success,
+    //             resRight.residual,
+    //             brain->locator->residualTolerance,
+    //             markers.size(),
+    //             brain->locator->minMarkerCnt
+    //         ),
+    //         res.success
+    //     );
 
     brain->log->log(
         "field/recal_enter_field", 
