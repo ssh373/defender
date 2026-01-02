@@ -125,9 +125,8 @@ int RobotClient::setVelocity(double x, double y, double theta, bool applyMinX, b
     if (fabs(_vx) > 1e-3 || fabs(_vy) > 1e-3 || fabs(_vtheta) > 1e-3) _lastNonZeroCmdTime = brain->get_clock()->now();
     brain->log->log("RobotClient/setVelocity_out",
        rerun::TextLog(format("vx: %.2f  vy: %.2f  vtheta: %.2f", x, y, theta)));
-    
-    double v = std::sqrt(x * x + y * y)
     brain->log->log("RobotClient/setVelocity_out_scalar", rerun::Scalar(v));
+
     return call(booster_interface::CreateMoveMsg(x, y, theta));
 }
 
