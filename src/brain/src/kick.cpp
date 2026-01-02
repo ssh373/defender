@@ -443,7 +443,7 @@ NodeStatus Kick::onRunning(){
     //     );
 
         // brain->client->setVelocity(vx, vy, vtheta);
-    }
+    // }
 
 
 
