@@ -411,39 +411,39 @@ NodeStatus Kick::onRunning(){
     }
 
     // [원본 그대로] 가속 로직 (점점 빨라짐)
-    if (brain->data->ballDetected) { 
-        double angle = brain->data->ball.yawToRobot;
-        // _speed는 멤버 변수
-        _speed += 0.1; 
+    // if (brain->data->ballDetected) { 
+    //     double angle = brain->data->ball.yawToRobot;
+    //     // _speed는 멤버 변수
+    //     _speed += 0.1; 
         
-        // 입력받은 제한 속도와 비교
-        double currentCmdSpeed = min(speedLimit, _speed);
-        brain->client->crabWalk(angle, currentCmdSpeed);
-    }
+    //     // 입력받은 제한 속도와 비교
+    //     double currentCmdSpeed = min(speedLimit, _speed);
+    //     brain->client->crabWalk(angle, currentCmdSpeed);
+    // }
     
     // 승재욱 추가: _calcSpeed 활용하도록 변경
-    // if(brain->data->ballDetected){
-    //     auto [vx, vy, _] = _calcSpeed();
-    //     double vtheta = brain->data->ball.yawToRobot * 1.5; // P-gain 1.5
-    //     // 실제 평면 속도
-    //     double v = std::sqrt(vx * vx + vy * vy);
+    if(brain->data->ballDetected){
+        auto [vx, vy, _] = _calcSpeed();
+        double vtheta = brain->data->ball.yawToRobot * 1.5; // P-gain 1.5
+        // 실제 평면 속도
+        double v = std::sqrt(vx * vx + vy * vy);
 
-    //     // === 로그 ===
-    //     brain->log->setTimeNow();
-    //     brain->log->log(
-    //         "debug/kick/speed",
-    //         rerun::TextLog(format(
-    //             "kickType=%s | vx=%.3f vy=%.3f | v=%.3f | vtheta=%.3f | range=%.3f",
-    //             kickType.c_str(),
-    //             vx, vy,
-    //             v,
-    //             vtheta,
-    //             ballRange
-    //         ))
-    //     );
+        // === 로그 ===
+        brain->log->setTimeNow();
+        brain->log->log(
+            "debug/kick/speed",
+            rerun::TextLog(format(
+                "kickType=%s | vx=%.3f vy=%.3f | v=%.3f | vtheta=%.3f | range=%.3f",
+                kickType.c_str(),
+                vx, vy,
+                v,
+                vtheta,
+                ballRange
+            ))
+        );
 
-        // brain->client->setVelocity(vx, vy, vtheta);
-    // }
+        brain->client->setVelocity(vx, vy, vtheta);
+    }
 
 
 
