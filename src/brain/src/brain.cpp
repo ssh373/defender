@@ -1604,7 +1604,7 @@ void Brain::handleCooperation() {
     for (int i = 0; i < aliveTmIdxs.size(); i++) {
         int tmIdx = aliveTmIdxs[i];
         auto tmStatus = data->tmStatus[tmIdx];
-        if (tmStatus.cost < tmMinCost) tmMinCost = tmStatus.cost*1.2;
+        if (tmStatus.cost < tmMinCost) tmMinCost = tmStatus.cost*0.8;
     }
     double BALL_CONTROL_COST_THRESHOLD = 3.0;
     get_parameter("strategy.cooperation.ball_control_cost_threshold", BALL_CONTROL_COST_THRESHOLD);
