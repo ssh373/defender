@@ -1,0 +1,65 @@
+<root BTCPP_format="4" >
+   <include path="./cam_find_and_track_ball.xml" />
+   <include path="./locate.xml" />
+   <include path="./find_ball.xml" />
+   
+   <BehaviorTree ID="DefenderAssist">
+      <ReactiveSequence>
+         <!-- 자기 위치 추정 -->
+         <SelfLocate mode="trust_direction" />
+         
+         <!-- 공 위치 알 때만 로컬라이제이션(공 위치에 대한 find상태가 아님을 의미)-->
+         <SubTree ID="Locate" _autoremap="true" _while="decision!='find'" />
+         
+         <!-- 상대 킥오프 대기 -->
+         <ReactiveSequence _while="wait_for_opponent_kickoff" name="상대 팀 킥오프 대기"> 
+            <SubTree ID="CamFindAndTrackBall" _autoremap="true" />
+            <SetVelocity />
+         </ReactiveSequence>
+         
+         <!-- 정상 경기 -->
+         <ReactiveSequence _while="!wait_for_opponent_kickoff" name="정상 경기">
+            
+            <!-- 공이 아웃된 경우 -->
+            <Sequence _while="ball_out">
+               <SubTree ID="CamFindAndTrackBall" _autoremap="true" />
+               <GoBackInField />
+               <SubTree ID="Locate" _autoremap="true" _while="decision!='find'" />
+            </Sequence>
+            
+            <!-- 공이 인플레이 -->
+            <ReactiveSequence _while="!ball_out">
+               <ReactiveSequence>
+                  <!-- 공 추적 -->
+                  <SubTree ID="CamFindAndTrackBall" _autoremap="true" />
+                  
+                  <!-- 킥 방향 계산 (패스 방향) -->
+                  <CalcPassDir pass_threshold="5.0" />
+                  
+                  <Sequence>
+                     
+                     <ReactiveSequence>
+                        <DefenderDecide decision_out="{decision}" decision_in="{decision}" chase_threshold="1.0" />
+                        
+                        <!-- 공 찾기 -->
+                        <SubTree ID="FindBall" _while="decision=='find'" _autoremap="true" />
+                     </ReactiveSequence>
+                     
+                     <!-- 행동 실행 -->
+                     <SetVelocity _while="!is_lead" />
+                     <!-- Chase -->
+                     <Chase _while="decision == 'chase' && is_lead" vx_limit="0.9" vy_limit="0.2" vtheta_limit="1.0" dist="0.1" safe_dist="0.5" />
+                     
+                     <!-- Adjust -->
+                     <Adjust _while="decision == 'adjust' && is_lead" turn_threshold="0.5" range="0.5" vx_limit="0.7" vy_limit="0.6" vtheta_limit="1.5" vtheta_factor="1.5" tangential_speed_far="0.7" tangential_speed_near="0.15" />
+                     
+                     <!-- Pass (Defender Kick) -->
+                     <Kick _while="decision == 'pass' && is_lead" speed_limit="0.8" min_msec_kick="1000" msecs_stablize="1000" kick_type="pass" />
+                     
+                  </Sequence>
+               </ReactiveSequence>
+            </ReactiveSequence>
+         </ReactiveSequence>
+      </ReactiveSequence>
+   </BehaviorTree>
+</root>

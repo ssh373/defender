@@ -36,10 +36,11 @@
 
                         <ReactiveSequence _while="gc_game_state=='READY'" name="Ready">
                             <SubTree ID="CamFindAndTrackBall" _autoremap="true" /> 
-                            <CalcKickDir />
                             <ReactiveSequence>
                                 
                                 <SubTree ID="Defender" _autoremap="true" _while="player_role == 'defender'" />
+                                <!-- <SubTree ID="DefenderAssist" _autoremap="true" _while="player_role == 'defender'" /> -->
+                                
                                 <SubTree ID="Striker" _autoremap="true" _while="player_role == 'striker'" />
                                 <!-- <Chase vx_limit="0.9" vy_limit="0.2" vtheta_limit="1.0" dist="0.3" safe_dist="0.5"/>
                                 <Adjust turn_threshold="0.1" range="0.4" vx_limit="0.7" vy_limit="0.6" vtheta_limit="1.5" vtheta_factor="1.5" tangential_speed_far="0.7" tangential_speed_near="0.15" />
@@ -55,10 +56,9 @@
 
                         <ReactiveSequence _while="gc_game_state=='PLAY'" name="Play">
                             <SubTree ID="CamFindAndTrackBall" _autoremap="true" />
-                            <CalcKickDir />
                             <ReactiveSequence>
                                 <!--<SubTree ID="Striker" _autoremap="true" _while="player_role == 'striker'" />-->
-                                <SubTree ID="Defender" _autoremap="true" _while="player_role == 'defender'" />
+                                <!-- <SubTree ID="Defender" _autoremap="true" _while="player_role == 'defender'" /> -->
                             </ReactiveSequence>
                             <SubTree ID="Locate" _autoremap="true" />
                         </ReactiveSequence>
