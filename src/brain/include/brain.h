@@ -144,6 +144,7 @@ private:
     void updateObstacleMemory();
     void handleCooperation();
     void updateCostToKick();
+    void logMemRobots(); 
     
 
     // ROS subscription 변수
