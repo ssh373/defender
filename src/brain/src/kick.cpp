@@ -223,7 +223,7 @@ NodeStatus CalcPassDir::tick(){
     if(bestTeammateIdx != -1){
         brain->data->kickType = "pass"; // 킥 타입 설정
         auto tmPos = brain->data->tmStatus[bestTeammateIdx].robotPoseToField;
-        
+        color = 0x00FFFFFF;
         // 공에서 팀원 방향으로 킥 방향 설정
         brain->data->kickDir = atan2(tmPos.y - bPos.y, tmPos.x - bPos.x);
         
@@ -247,7 +247,7 @@ NodeStatus CalcPassDir::tick(){
         "field/pass_dir",
         rerun::Arrows2D::from_vectors({{10 * cos(brain->data->kickDir), -10 * sin(brain->data->kickDir)}})
             .with_origins({{brain->data->ball.posToField.x, -brain->data->ball.posToField.y}})
-            .with_colors({0x00FFFFFF}) // Cyan color for pass
+            .with_colors({color}) // Cyan color for pass
             .with_radii(0.01)
     );
 
