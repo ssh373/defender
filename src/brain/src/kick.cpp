@@ -199,7 +199,7 @@ NodeStatus CalcPassDir::tick(){
     int bestTeammateIdx = -1;
     double minDist = 9999.0;
     auto fd = brain->config->fieldDimensions; // 필드 정보
-    auto color = 0xFFFFFFFF
+    auto color = 0xFFFFFFFF;
 
     // 가장 가까운(혹은 적절한) 팀원 찾기
     for(int i=0; i<HL_MAX_NUM_PLAYERS; i++){
@@ -420,7 +420,7 @@ NodeStatus Kick::onRunning(){
                 ballRange
             ))
         );
-        
+
         brain->client->setVelocity(vx, vy, vtheta);
     }
 
