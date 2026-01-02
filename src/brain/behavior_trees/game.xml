@@ -35,6 +35,11 @@
                         </ReactiveSequence>
 
                         <ReactiveSequence _while="gc_game_state=='READY'" name="Ready">
+                            <SetVelocity x="0.0" y="0.0" theta="0.0" />
+                            <SubTree ID="Locate" _autoremap="true" />
+                        </ReactiveSequence>
+
+                        <ReactiveSequence _while="gc_game_state=='SET'" name="Set">
                             <SubTree ID="CamFindAndTrackBall" _autoremap="true" /> 
                             <ReactiveSequence>
                                 
@@ -47,11 +52,8 @@
                                 <Kick speed_limit="0.3" min_msec_kick="1000" msecs_stablize="1000"/> -->
                             </ReactiveSequence>
                             <SubTree ID="Locate" _autoremap="true" />
-                        </ReactiveSequence>
-
-                        <ReactiveSequence _while="gc_game_state=='SET'" name="Set">
-                            <SetVelocity x="0.0" y="0.0" theta="0.0" />
-                            <SubTree ID="Locate" _autoremap="true" />
+                            <!-- <SetVelocity x="0.0" y="0.0" theta="0.0" />
+                            <SubTree ID="Locate" _autoremap="true" /> -->
                         </ReactiveSequence>
 
                         <ReactiveSequence _while="gc_game_state=='PLAY'" name="Play">
