@@ -424,7 +424,6 @@ NodeStatus Kick::onRunning(){
             "debug/kick/speed",
             rerun::TextLog(format(
                 "angle=%s | currentCmdSpeed=%.3f",
-                kickType.c_str(),
                 angle, currentCmdSpeed
             ))
         );
