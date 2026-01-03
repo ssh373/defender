@@ -54,7 +54,7 @@
                      <Adjust _while="decision == 'adjust' && is_lead" turn_threshold="0.5" range="0.5" vx_limit="0.7" vy_limit="0.6" vtheta_limit="1.5" vtheta_factor="1.5" tangential_speed_far="0.7" tangential_speed_near="0.15" />
                      
                      <!-- Pass (Defender Kick) -->
-                     <Kick _while="decision == 'pass' && is_lead" speed_limit="0.8" vx_limit="0.8" vy_limit="0.3" min_msec_kick="1000" msecs_stablize="1000" kick_type="pass" />
+                     <Kick _while="decision == 'pass' && is_lead" speed_limit="0.5" vx_limit="0.8" vy_limit="0.3" min_msec_kick="1000" msecs_stablize="1000" kick_type="pass" />
                      
                   </Sequence>
                </ReactiveSequence>

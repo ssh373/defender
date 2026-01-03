@@ -255,7 +255,7 @@ NodeStatus CalcPassDir::tick(){
         color = 0x00FF00FF;
         brain->data->kickDir = atan2(
             0 - bPos.y,
-            - fd.length/2 - bPos.x // 여기도 - 붙였음
+            - fd.length/4 - bPos.x // 여기도 - 붙였음
         );
         // 이것도 - 로 바꿈 + 0에서 M_PI로 바꿈
         if (brain->data->ball.posToField.x < - (brain->config->fieldDimensions.length / 2)) brain->data->kickDir = M_PI; 
@@ -414,21 +414,25 @@ NodeStatus Kick::onRunning(){
     if (brain->data->ballDetected) { 
         double angle = brain->data->ball.yawToRobot;
         // _speed는 멤버 변수
-        _speed += 0.1; 
-        
+        // _speed += 0.1; 
+        double speedLimit = getInput<double>("speed_limit").value();
+
+        // 원하는 고정 속도 (예: speed_limit 그대로 쓰거나, 별도 파라미터로)
+        double fixedSpeed = speedLimit;  // 혹은 0.8 같은 상수
+
         // 입력받은 제한 속도와 비교
-        double currentCmdSpeed = min(speedLimit, _speed);
+        // double currentCmdSpeed = min(speedLimit, _speed);
         
         brain->log->setTimeNow();
         brain->log->log(
             "debug/kick/speed",
             rerun::TextLog(format(
                 "angle=%s | currentCmdSpeed=%.3f",
-                angle, currentCmdSpeed
+                angle,fixedSpeed
             ))
         );
 
-        brain->client->crabWalk(angle, currentCmdSpeed);
+        brain->client->crabWalk(angle, fixedSpeed);
     }
     
     // 승재욱 추가: _calcSpeed 활용하도록 변경
