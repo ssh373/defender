@@ -221,7 +221,7 @@ NodeStatus CalcPassDir::tick(){
     }
 
     // 패스가 가능한지 ? 아니라면 다음으로
-    bool passFound = (bestTeammateIdx != -1);
+    bool passFound = true; // 임시 한대로도 가능하게 
     setOutput("pass_found", passFound);
 
     if(!passFound){
@@ -230,6 +230,10 @@ NodeStatus CalcPassDir::tick(){
 
     brain->data->kickType = "pass"; // 킥 타입 설정
     auto tmPos = brain->data->tmStatus[bestTeammateIdx].robotPoseToField;
+    
+    //임시 한대로도
+    double tmpos.x=-1.0;
+    double tmpos.y=2.0;
 
     double offset = 0.8;
     // 골대 중심 좌표

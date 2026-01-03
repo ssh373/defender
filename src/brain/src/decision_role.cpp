@@ -265,12 +265,12 @@ NodeStatus DefenderDecide::tick() {
         && !avoidKick
         && ball.range < 1.5
     ) {
-        if(passFound) {
-        newDecision = "pass"; // pass가능하면 패스
+        if(passFound) { //임시로 한대로도 가능하게 
+        newDecision = "kick"; // pass가능하면 패스
         color = 0x00FF00FF;
         brain->data->isFreekickKickingOff = false;}
         else{
-        newDecision = "kick"; // 아니면 킥
+        newDecision = "pass"; // 아니면 
         color = 0xFF0000FF;
         brain->data->isFreekickKickingOff = false;} 
     }
