@@ -234,7 +234,7 @@ NodeStatus DefenderDecide::tick() {
     auto color = 0xFFFFFFFF; 
     bool iKnowBallPos = brain->tree->getEntry<bool>("ball_location_known");
     bool tmBallPosReliable = brain->tree->getEntry<bool>("tm_ball_pos_reliable");
-
+    bool passFound = brain->tree->getEntry<bool>("pass_found");
 
     // 1. 공을 모르면 -> 찾기
     if (!(iKnowBallPos || tmBallPosReliable))
@@ -265,9 +265,14 @@ NodeStatus DefenderDecide::tick() {
         && !avoidKick
         && ball.range < 1.5
     ) {
-        newDecision = "pass"; // 수비수는 킥을 "패스"라고 명명
+        if(passFound) {
+        newDecision = "pass"; // pass가능하면 패스
         color = 0x00FF00FF;
-        brain->data->isFreekickKickingOff = false; 
+        brain->data->isFreekickKickingOff = false;}
+        else{
+        newDecision = "kick"; // 아니면 킥
+        color = 0xFF0000FF;
+        brain->data->isFreekickKickingOff = false;} 
     }
     // 4. 그 외 -> 위치 조정 ("adjust")
     else

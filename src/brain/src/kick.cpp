@@ -220,47 +220,63 @@ NodeStatus CalcPassDir::tick(){
         }
     }
 
-    if(bestTeammateIdx != -1){
-        brain->data->kickType = "pass"; // 킥 타입 설정
-        auto tmPos = brain->data->tmStatus[bestTeammateIdx].robotPoseToField;
-        color = 0x00FFFFFF;
-        double offset = 0.8;
-        // 골대 중심 좌표 (공격 골대가 -L/2 라면)
-        double gx = -fd.length / 2.0;
-        double gy = 0.0;
+    // 패스가 가능한지 ? 아니라면 다음으로
+    bool passFound = (bestTeammateIdx != -1);
+    setOutput("pass_found", passFound);
 
-        // 팀원 -> 골대 벡터
-        double vg_x = gx - tmPos.x;
-        double vg_y = gy - tmPos.y;
-
-        double vg_norm = std::hypot(vg_x, vg_y);
-        
-        // 팀원->골대 단위벡터
-        double ug_x = vg_x / vg_norm;
-        double ug_y = vg_y / vg_norm;
-
-        // 팀원 "앞" 타겟 (팀원 위치에서 골대 방향으로 offset만큼)
-        double tx = tmPos.x + offset * ug_x;
-        double ty = tmPos.y + offset * ug_y;
-
-        // 공 -> 타겟 방향으로 킥
-        brain->data->kickDir = atan2(ty - bPos.y, tx - bPos.x);
-        // 공에서 팀원 방향으로 킥 방향 설정
-        // brain->data->kickDir = atan2(tmPos.y - bPos.y, tmPos.x - bPos.x);
-        
-        brain->log->logToScreen("debug/Pass", format("Passing to TM %d at Dist %.2f to (%.2f, %.2f)", bestTeammateIdx+1, minDist, tx, ty), 0x00FF00FF);
-    } else {
-        // 줄 사람 없으면 그냥 슛 (기존 로직 fallback)
-        brain->data->kickType = "shoot";
-        color = 0x00FF00FF;
-        brain->data->kickDir = atan2(
-            0 - bPos.y,
-            - 3.0 - bPos.x // 여기도 - 붙였음
-        );
-        // 이것도 - 로 바꿈 + 0에서 M_PI로 바꿈
-        if (brain->data->ball.posToField.x < - (brain->config->fieldDimensions.length / 2)) brain->data->kickDir = M_PI; 
-        brain->log->logToScreen("debug/Pass", "No Teammate found, fallback to shoot", 0xFF0000FF);
+    if(!passFound){
+        return NodeStatus::SUCCESS;
     }
+
+    brain->data->kickType = "pass"; // 킥 타입 설정
+    auto tmPos = brain->data->tmStatus[bestTeammateIdx].robotPoseToField;
+
+    double offset = 0.8;
+    // 골대 중심 좌표
+    double gx = -fd.length / 2.0;
+    double gy = 0.0;
+
+    // 팀원 -> 골대
+    double vg_x = gx - tmPos.x;
+    double vg_y = gy - tmPos.y;
+
+    double vg_norm = std::hypot(vg_x, vg_y);
+    
+    // 팀원->골대 단위벡터
+    double ug_x = vg_x / vg_norm;
+    double ug_y = vg_y / vg_norm;
+
+    // 팀원 앞 타겟 (팀원 위치에서 골대 방향으로 offset만큼)
+    double tx = tmPos.x + offset * ug_x;
+    double ty = tmPos.y + offset * ug_y;
+
+    // 공 -> 타겟 방향으로 킥
+    brain->data->kickDir = atan2(ty - bPos.y, tx - bPos.x);
+    // 공에서 팀원 방향으로 킥 방향 설정
+    // brain->data->kickDir = atan2(tmPos.y - bPos.y, tmPos.x - bPos.x);
+    
+    // 거리에 비례한 speed limit 설정
+    // pass일때만 해주고 kick일때는 그냥 config에 설정된 값으로 세게 찬다
+    double d = norm(bPos.x - tmPos.x, bPos.y - tmPos.y);
+
+    // 파라미터
+    double k = 1.0;        // 감도
+
+    // 경험적 식...
+    double passSpeed = k * std::sqrt(d / 10.0);
+
+    // BT로 전달 (Kick에서 speed_limit으로 사용)
+    setOutput("pass_speed_limit", passSpeed);
+
+    // 디버그 로그
+    brain->log->logToScreen(
+        "debug/pass_speed",
+        format("PassPower d=%.2f -> speed_limit=%.2f", d, passSpeed),
+        0x00FFFFFF
+    );
+
+
+    brain->log->logToScreen("debug/Pass", format("Passing to TM %d at Dist %.2f to (%.2f, %.2f)", bestTeammateIdx+1, minDist, tx, ty), 0x00FF00FF);
 
     // 시각화
     brain->log->setTimeNow();
