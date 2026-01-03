@@ -232,8 +232,8 @@ NodeStatus CalcPassDir::tick(){
     auto tmPos = brain->data->tmStatus[bestTeammateIdx].robotPoseToField;
     
     //임시 한대로도
-    tmpos.x=-1.0;
-    tmpos.y=2.0;
+    tmPos.x=-1.0;
+    tmPos.y=2.0;
 
     double offset = 0.8;
     // 골대 중심 좌표
