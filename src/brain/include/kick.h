@@ -54,7 +54,9 @@ public:
 
     static PortsList providedPorts(){
         return {
-            InputPort<double>("pass_threshold", 3.0, "팀원과의 최대 거리")
+            InputPort<double>("pass_threshold", 3.0, "팀원과의 최대 거리"),
+            OutputPort<bool>("pass_found"),
+            OutputPort<double>("pass_speed_limit"),
         };
     }
 
