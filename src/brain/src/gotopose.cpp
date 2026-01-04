@@ -51,7 +51,7 @@ NodeStatus GoToPose::tick(){
       controly *= linearFactor;
       controlx = cap(controlx, vLimit, -vLimit*0.5);    
       controly = cap(controly, vLimit*0.5, -vLimit*0.5);
-      controltheta = errortheta * Kp;
+      controltheta = 0.0;
     }
     else if(dist < turn_Threshold && dist > stop_Threshold){ // 선회
 		  controlx = errorx*cos(gtheta) + errory*sin(gtheta);

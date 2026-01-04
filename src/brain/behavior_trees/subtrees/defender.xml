@@ -49,13 +49,13 @@
                      <!-- 행동 실행 -->
 
                      <!--위치로 돌아가기-->
-                     <GoToPose _while="decision == 'return'" target_pos_x="{return_x}" target_pos_y="-2.5" target_pos_theta="-1.5708" turn_threshold="0.5" stop_threshold="0.15" v_limit="0.6"/>
+                     <GoToPose _while="decision == 'return'" target_pos_x="{return_x}" target_pos_y="-2.0" target_pos_theta="-1.5708" turn_threshold="0.5" stop_threshold="0.15" v_limit="0.6"/>
 
                      <!-- Chase -->
                      <Chase _while="decision == 'chase'" vx_limit="0.9" vy_limit="0.2" vtheta_limit="1.0" dist="0.1" safe_dist="0.5" />
                      
                      <!-- Non-lead- 좌우만 따라가기 -->
-                     <Chase _while="decision == 'side_chase'" vx_limit="0.0" vy_limit="0.25" vtheta_limit="0" dist="0.1" safe_dist="0.5" />
+                     <Chase _while="decision == 'side_chase'" vx_limit="0.0" vy_limit="0.25" vtheta_limit="0.0" dist="0.1" safe_dist="0.5" />
 
                      <!-- Adjust -->
                      <Adjust _while="decision == 'adjust'" turn_threshold="0.5" range="0.5" vx_limit="0.7" vy_limit="0.6" vtheta_limit="1.5" vtheta_factor="1.5" tangential_speed_far="0.7" tangential_speed_near="0.15" />

@@ -253,6 +253,18 @@ NodeStatus DefenderDecide::tick() {
     else if (!isLead && !inLane) {
         newDecision = "return";
         color = 0xFFFF00FF;
+        
+        if (lastDecision != "return") {
+        brain->tree->setEntry("return_x", pose.x);
+
+        // 화면 로그로 확인 (콘솔/화면)
+        brain->log->logToScreen(
+            "debug/ReturnTarget",
+            format("Saved return_x=%.2f (pose=(%.2f,%.2f,%.2f)) target=(%.2f,-2.5)",
+                   pose.x, pose.x, pose.y, pose.theta, pose.x),
+            0xFFFF00FF
+        );
+        }
     }
     // 3) lead이면 -> (기존대로) chase / pass / adjust
     else if (isLead) {
