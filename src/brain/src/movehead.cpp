@@ -105,7 +105,7 @@ NodeStatus CamTrackBall::tick(){
     if (!(iKnowBallPos || tmBallPosReliable))
         return NodeStatus::SUCCESS;
 
-    if(!iKnowBallPos){ return NodeStatus::SUCCESS; }
+    // if(!iKnowBallPos){ return NodeStatus::SUCCESS; }
 
     if (!iSeeBall){ // 내가 공을 못봤을 때
         if (iKnowBallPos) {
