@@ -268,7 +268,19 @@ NodeStatus DefenderDecide::tick() {
         if(passFound) {
         newDecision = "pass"; // pass가능하면 패스
         color = 0x00FF00FF;
-        brain->data->isFreekickKickingOff = false;}
+        brain->data->isFreekickKickingOff = false;
+        
+
+        //pass 진입시 직전 포즈 저장 (for pass to pass, 패스 성공 후에 돌아가기 위함)
+        if (lastDecision != "pass") {
+        auto pose = brain->data->robotPoseToField;
+        brain->tree->setEntry("return_x", pose.x);
+        brain->tree->setEntry("return_y", pose.y);
+        brain->tree->setEntry("return_yaw", pose.theta); // pose의 yaw 필드명 확인
+        
+        brain->log->logToScreen("debug/ReturnSave",format("Saved return pose: x=%.2f y=%.2f th=%.2f", pose.x, pose.y, pose.theta),0xFFFFFFFF);
+        }
+        }
         else{
         newDecision = "kick"; // 아니면 
         color = 0xFF0000FF;
