@@ -1495,7 +1495,7 @@ void Brain::handleCooperation() {
             auto color = 0x00FFFFFF;
             if (!tmStatus.isAlive) color = 0x006666FF;
             else if (!tmStatus.isLead) color = 0x00CCCCFF;
-            string label = format("ID: %d, Cost: %.1f", tmId, tmStatus.cost*0.8);
+            string label = format("ID: %d, Cost: %.1f", tmId, tmStatus.cost);
             log->logRobot(format("field/teammate-%d", tmId).c_str(), tmStatus.robotPoseToField, color, label);
             log->logBall(
             format("field/tm_ball-%d", tmId).c_str(),   // 로그 위치 수정
