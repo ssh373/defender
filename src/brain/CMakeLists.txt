@@ -58,6 +58,7 @@ set(SOURCE_FILES
   src/adjust.cpp
   src/brain_communication.cpp
   src/decision_role.cpp
+  src/gotopose.cpp
 )
 
 add_executable(brain_node ${SOURCE_FILES})

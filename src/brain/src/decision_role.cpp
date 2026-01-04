@@ -208,7 +208,7 @@ NodeStatus DefenderDecide::tick() {
     // 반코트 게임에서는 전방으로 차는 동작(패스/걷어내기)을 위해 그대로 사용합니다.
     const double goalpostMargin = 0.5; 
     bool angleGoodForKick = brain->isAngleGood(goalpostMargin, "kick");
-
+    
     // 장애물 회피 로직
     bool avoidPushing;
     double kickAoSafeDist;
@@ -235,6 +235,7 @@ NodeStatus DefenderDecide::tick() {
     bool iKnowBallPos = brain->tree->getEntry<bool>("ball_location_known");
     bool tmBallPosReliable = brain->tree->getEntry<bool>("tm_ball_pos_reliable");
     bool passFound = brain->tree->getEntry<bool>("pass_found");
+    bool isLead = brain->tree->getEntry<bool>("is_lead");
 
     // 1. 공을 모르면 -> 찾기
     if (!(iKnowBallPos || tmBallPosReliable))
@@ -250,13 +251,13 @@ NodeStatus DefenderDecide::tick() {
         //     newDecision = "wait";
         //     color = 0x00FFFFFF; // Cyan/White mix
         // } else {
-            newDecision = "chase";
+            newDecision = isLead ? "chase" : "side_chase"; //passtopass용 side_chase
             color = 0x0000FFFF;
         // }
     } 
     // 3. 킥 조건 만족하면 -> kick(패스)
     else if (
-        (
+        isLead && (
             (angleGoodForKick && !brain->data->isFreekickKickingOff) 
             || reachedKickDir
         )
@@ -270,16 +271,6 @@ NodeStatus DefenderDecide::tick() {
         color = 0x00FF00FF;
         brain->data->isFreekickKickingOff = false;
         
-
-        //pass 진입시 직전 포즈 저장 (for pass to pass, 패스 성공 후에 돌아가기 위함)
-        if (lastDecision != "pass") {
-        auto pose = brain->data->robotPoseToField;
-        brain->tree->setEntry("return_x", pose.x);
-        brain->tree->setEntry("return_y", pose.y);
-        brain->tree->setEntry("return_yaw", pose.theta); // pose의 yaw 필드명 확인
-        
-        brain->log->logToScreen("debug/ReturnSave",format("Saved return pose: x=%.2f y=%.2f th=%.2f", pose.x, pose.y, pose.theta),0xFFFFFFFF);
-        }
         }
         else{
         newDecision = "kick"; // 아니면 
@@ -289,8 +280,18 @@ NodeStatus DefenderDecide::tick() {
     // 4. 그 외 -> 위치 조정 ("adjust")
     else
     {
-        newDecision = "adjust";
+        newDecision = isLead ? "adjust" : "return"; //일단 passtopass용 return
         color = 0xFFFF00FF;
+        
+        if (newDecision == "return" && lastDecision != "return") {
+            auto pose = brain->data->robotPoseToField;
+            brain->tree->setEntry("return_x", pose.x);
+
+            // 필요하면 로그도
+            brain->log->logToScreen(
+                "debug/ReturnSave",
+                format("Saved return_x on return entry: x=%.2f", pose.x), 0xFFFFFFFF );    
+        }   
     }
 
     setOutput("decision_out", newDecision);
