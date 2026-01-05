@@ -299,60 +299,76 @@ NodeStatus DefenderDecide::tick() {
         color = 0x00FFFFFF;
     }
 
-    // // 1. 공을 모르면 -> 찾기
-    // if (!(iKnowBallPos || tmBallPosReliable))
-    // {
-    //     newDecision = "find";
-    //     color = 0xFFFFFFFF;
-    // } 
-    // // 2. 추적 거리 밖이면 -> chase
-    // else if (ballRange > chaseRangeThreshold * (lastDecision == "chase" ? 0.9 : 1.0))
-    // {
-    //     // 추가: 방금 패스를 했다면 바로 쫓아가지 않음
-    //      if (lastDecision == "pass") {
-    //          newDecision = "wait"; // 혹은 "return"
-    //      } else {
-    //          newDecision = "chase";
-    // }
-    // } 
-    // // 3. 킥 조건 만족하면 -> kick(패스)
-    // else if (
-    //     (
-    //         (angleGoodForKick && !brain->data->isFreekickKickingOff) 
-    //         || reachedKickDir
-    //     )
-    //     && brain->data->ballDetected
-    //     && fabs(brain->data->ball.yawToRobot) < M_PI / 2.
-    //     && !avoidKick
-    //     && ball.range < 1.5
-    // ) {
-    //     if(passFound) {
-    //     newDecision = "pass"; // pass가능하면 패스
-    //     color = 0x00FF00FF;
-    //     brain->data->isFreekickKickingOff = false;
-        
+// 1. 공을 모르면 -> 찾기
+// if (!(iKnowBallPos || tmBallPosReliable))
+// {
+//     newDecision = "find";
+//     color = 0xFFFFFFFF;
+// } 
+// // 2. 내가 리드가 아니면 -> 패스 지점(x, y)으로 Return
+// else if (!isLead) 
+// {
+//     newDecision = "return";
+//     color = 0xFFFF00FF; // 노란색
 
-    //     //pass 진입시 직전 포즈 저장 (for pass to pass, 패스 성공 후에 돌아가기 위함)
-    //     if (lastDecision != "pass") {
-    //     auto pose = brain->data->robotPoseToField;
-    //     brain->tree->setEntry("return_x", pose.x);
-    //     brain->tree->setEntry("return_y", pose.y);
-    //     brain->tree->setEntry("return_yaw", pose.theta); // pose의 yaw 필드명 확인
-        
-    //     brain->log->logToScreen("debug/ReturnSave",format("Saved return pose: x=%.2f y=%.2f th=%.2f", pose.x, pose.y, pose.theta),0xFFFFFFFF);
-    //     }
-    //     }
-    //     else{
-    //     newDecision = "kick"; // 아니면 
-    //     color = 0xFF0000FF;
-    //     brain->data->isFreekickKickingOff = false;} 
-    // }
-    // // 4. 그 외 -> 위치 조정 ("adjust")
-    // else
-    // {
-    //     newDecision = "adjust";
-    //     color = 0xFFFF00FF;
-    // }
+//     // 저장된 좌표가 없으면 현재 위치를 기본값으로 설정 (첫 기동 시 안전장치)
+//     if (!brain->tree->isDefined("return_x")) {
+//         brain->tree->setEntry("return_x", pose.x);
+//         brain->tree->setEntry("return_y", pose.y);
+//     }
+    
+//     double tx = brain->tree->getEntry<double>("return_x");
+//     double ty = brain->tree->getEntry<double>("return_y");
+//     brain->log->logToScreen("debug/ReturnTarget", 
+//         format("Returning to: x=%.2f, y=%.2f", tx, ty), 0xFFFF00FF);
+// }
+// // 3. 내가 리드인 경우 -> 적극적 동작 수행
+// else 
+// {
+//     bool wasChasing = (lastDecision == "chase");
+
+//     // 3-1. 공이 멀면 -> chase
+//     if (ballRange > chaseRangeThreshold * (wasChasing ? 0.9 : 1.0)) 
+//     {
+//         newDecision = "chase";
+//         color = 0x0000FFFF; // 파란색
+//     }
+//     // 3-2. 킥/패스 조건 만족 시 -> 실행
+//     else if (
+//         ((angleGoodForKick && !brain->data->isFreekickKickingOff) || reachedKickDir)
+//         && brain->data->ballDetected
+//         && fabs(brain->data->ball.yawToRobot) < 0.1
+//         && !avoidKick
+//         && ball.range < 1.5
+//     ) {
+//         if (passFound) {
+//             newDecision = "pass";
+//             color = 0x00FF00FF; // 초록색
+//             brain->data->isFreekickKickingOff = false;
+
+//             // [핵심] 패스 직전 위치(x, y)와 방향(theta) 저장
+//             if (lastDecision != "pass") {
+//                 brain->tree->setEntry("return_x", pose.x);
+//                 brain->tree->setEntry("return_y", pose.y);
+//                 brain->tree->setEntry("return_yaw", pose.theta);
+                
+//                 brain->log->logToScreen("debug/ReturnSave", 
+//                     format("Saved Pass Point: x=%.2f y=%.2f", pose.x, pose.y), 0xFFFFFFFF);
+//             }
+//         }
+//         else {
+//             newDecision = "kick";
+//             color = 0xFF0000FF; // 빨간색
+//             brain->data->isFreekickKickingOff = false;
+//         } 
+//     }
+//     // 3-3. 그 외 (각도가 안 맞으면) -> 위치 조정 (adjust)
+//     else 
+//     {
+//         newDecision = "adjust";
+//         color = 0xFFFF00FF; // 노란색
+//     }
+// }
 
 
     setOutput("decision_out", newDecision);
