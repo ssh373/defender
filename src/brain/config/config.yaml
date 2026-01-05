@@ -83,4 +83,4 @@ brain_node:
       max_log_file_mins: 5.0 # 리런 로그 파일 최대 길이 (분)
       img_interval: 1 # 리런 로그 파일 이미지 저장 간격
       
-    game_control_ip: "192.168.50.221" # 게임 컨트롤러 IP 주소 -> gamecontroller launch 파일도 수정 필요
+    game_control_ip: "192.168.50.167" # 게임 컨트롤러 IP 주소 -> gamecontroller launch 파일도 수정 필요
