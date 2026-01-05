@@ -43,28 +43,22 @@ NodeStatus GoToPose::tick(){
     double controlx, controly, controltheta;
     double Kp = 4.0;
     double linearFactor = 1.0 / (1.0 + exp(-6.0 * (dist - 0.5)));
+    
+    if(dist > stop_Threshold){// 직진
+      controltheta = errortheta * Kp;
+      controltheta = cap(controltheta, 1.2, -1.2); // 회전 속도 제한
 
-    if (dist > stop_Threshold && fabs(errortheta) > 0.2) { 
-        controlx = 0;
-        controly = 0;
-        controltheta = errortheta * Kp;
-        controltheta = cap(controltheta, 1.5, -1.5);
-    }
-    else if(dist > stop_Threshold){// 직진
       controlx = errorx*cos(gtheta) + errory*sin(gtheta);
       controly = -errorx*sin(gtheta) + errory*cos(gtheta);
-
-      controltheta = errortheta * Kp;
-
       controlx *= linearFactor;
       controly *= linearFactor;
       controlx = cap(controlx, vLimit, -vLimit*0.5);    
       controly = cap(controly, vLimit*0.5, -vLimit*0.5);
     }
-    else if (fabs(errortheta) > 0.2) { // 약 12도 오차
-      controlx = 0;
-      controly = 0;
-      controltheta = errortheta * Kp; // 제자리에서 각도만 P제어
+    else if (fabs(errortheta) > 0.2) {
+        controlx = 0;
+        controly = 0;
+        controltheta = errortheta * Kp;
     }
     else{ // 정지
         controlx = 0;
