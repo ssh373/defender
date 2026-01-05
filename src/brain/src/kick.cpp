@@ -233,7 +233,7 @@ NodeStatus CalcPassDir::tick(){
     brain->data->kickType = "pass"; // 킥 타입 설정
     auto tmPos = brain->data->tmStatus[bestTeammateIdx].robotPoseToField;
 
-    double offset = 0.8;
+    double offset = 0.0;
     // 골대 중심 좌표
     double gx = -fd.length / 2.0;
     double gy = 0.0;
