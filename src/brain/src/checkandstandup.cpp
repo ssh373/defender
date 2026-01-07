@@ -33,7 +33,7 @@ NodeStatus CheckAndStandUp::tick()
         brain->data->recoveryPerformedRetryCount < brain->get_parameter("recovery.retry_max_count").get_value<int>()) {
         brain->client->standUp();
         brain->data->recoveryPerformed = true;
-        brain->speak("Trying to stand up");
+        //brain->speak("Trying to stand up");
         brain->log->log("recovery", rerun::TextLog(format("Recovery retry count: %d", brain->data->recoveryPerformedRetryCount)));
         return NodeStatus::SUCCESS;
     }
