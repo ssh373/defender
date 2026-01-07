@@ -110,6 +110,9 @@ Brain::Brain() : rclcpp::Node("brain_node"){
 
     // 게임 컨트롤러 IP 주소
     declare_parameter<string>("game_control_ip", "0.0.0.0");
+
+    //recovery 관련
+    declare_parameter<int>("recovery.retry_max_count", 2);
 }
 
 Brain::~Brain(){}
