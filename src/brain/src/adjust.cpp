@@ -39,6 +39,8 @@ NodeStatus Adjust::tick(){
     getInput("vy_limit", vyLimit);
     getInput("vtheta_limit", vthetaLimit);
     getInput("range", range);
+    double kickYOffset;
+    if(!getInput("kick_y_offset", kickYOffset)) kickYOffset = 0.077;
 
     log(format("ballX: %.1f ballY: %.1f ballYaw: %.1f", brain->data->ball.posToRobot.x, brain->data->ball.posToRobot.y, brain->data->ball.yawToRobot));
     double NO_TURN_THRESHOLD, TURN_FIRST_THRESHOLD;
@@ -49,8 +51,13 @@ NodeStatus Adjust::tick(){
     double vx = 0, vy = 0, vtheta = 0;
     double kickDir = brain->data->kickDir;
     double dir_rb_f = brain->data->robotBallAngleToField; 
-    double deltaDir = toPInPI(kickDir - dir_rb_f);
+    // double deltaDir = toPInPI(kickDir - dir_rb_f);
+    double deltaDirVal = toPInPI(kickDir - dir_rb_f);
     double ballRange = brain->data->ball.range;
+
+    // 한 발로 차기 위해 공을 로봇 중심보다 옆(kickYOffset)에 두도록 정렬
+    // deltaDir 각도 에러 수정
+    double deltaDir = toPInPI(kickDir - dir_rb_f + kickYOffset);
 
     double ballYaw = brain->data->ball.yawToRobot;
     // double st = cap(fabs(deltaDir), st_far, st_near);
@@ -59,7 +66,7 @@ NodeStatus Adjust::tick(){
     double r = range;
     double sr = cap(R - r, 0.5, -0.2); // 0.2는 너무 가까워질 때 후진도 가능하도록 -> 게걸음 방지
     // R: 현재 공 거리, r: 목표 거리 (0.6), sr: 앞으로 가는 속도 (R-r)
-    log(format("R: %.2f, r: %.2f, sr: %.2f", R, r, sr));
+    log(format("R: %.2f, r: %.2f, sr: %.2f, offset: %.2f, targetAng: %.2f", R, r, sr, kickYOffset, targetAngleOffset));
 
     log(format("deltaDir = %.1f", deltaDir));
     if (fabs(deltaDir) * R < NEAR_THRESHOLD) {
@@ -78,12 +85,11 @@ NodeStatus Adjust::tick(){
     // vtheta = toPInPI(ballYaw + st / R * (deltaDir > 0 ? 1.0 : -1.0)); 
     vtheta = ballYaw;
     vtheta *= vtheta_factor; 
-    
     if (fabs(ballYaw) < NO_TURN_THRESHOLD) vtheta = 0.;
     
     // 방향이 많이 틀어졌거나 위치가 많이 벗어났으면 일단 제자리 회전
     if (
-        fabs(ballYaw) > TURN_FIRST_THRESHOLD  
+        fabs(ballYaw) > TURN_FIRST_THRESHOLD 
         && fabs(deltaDir) < M_PI / 4
     ) { 
         vx = 0;
