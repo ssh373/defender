@@ -68,7 +68,7 @@
                      <!-- <Kick _while="decision == 'pass'" speed_limit="{pass_speed_limit}" vx_limit="0.8" vy_limit="0.3" min_msec_kick="1000" msecs_stablize="1000" kick_type="pass" /> -->
                      
                      <Kick _while="decision == 'kick'" speed_limit="0.8" vx_limit="0.8" vy_limit="0.3" min_msec_kick="1000" msecs_stablize="1000" kick_type="shoot" />
-                     <ReactiveSequence>
+                     </ReactiveSequence>
                   </Sequence>
                </ReactiveSequence>
             </ReactiveSequence>
