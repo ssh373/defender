@@ -66,7 +66,7 @@ NodeStatus Adjust::tick(){
     double r = range;
     double sr = cap(R - r, 0.5, -0.2); // 0.2는 너무 가까워질 때 후진도 가능하도록 -> 게걸음 방지
     // R: 현재 공 거리, r: 목표 거리 (0.6), sr: 앞으로 가는 속도 (R-r)
-    log(format("R: %.2f, r: %.2f, sr: %.2f, offset: %.2f, targetAng: %.2f", R, r, sr, kickYOffset, targetAngleOffset));
+    log(format("R: %.2f, r: %.2f, sr: %.2f, offset: %.2f", R, r, sr, kickYOffset));
 
     log(format("deltaDir = %.1f", deltaDir));
     if (fabs(deltaDir) * R < NEAR_THRESHOLD) {
