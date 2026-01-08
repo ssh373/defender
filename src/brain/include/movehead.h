@@ -91,6 +91,28 @@ private:
     Brain *brain;
 };
 
+class CamScanField : public SyncActionNode
+{
+public:
+    CamScanField(const std::string &name, const NodeConfig &config, Brain *_brain) : SyncActionNode(name, config), brain(_brain) {}
+
+    static BT::PortsList providedPorts()
+    {
+        return {
+            InputPort<double>("low_pitch", 0.6,  "아래를 볼 때의 최대 pitch"),
+            InputPort<double>("high_pitch", 0.45, "위를 볼 때의 최소 pitch"),
+            InputPort<double>("left_yaw", 0.8,   "왼쪽을 볼 때의 최대 yaw"),
+            InputPort<double>("right_yaw", -0.8, "오른쪽을 볼 때의 최소 yaw"),
+            InputPort<int>("msec_cycle", 4000,   "한 바퀴 도는 데 걸리는 시간(밀리초)"),
+        };
+    }
+
+    NodeStatus tick() override;
+
+private:
+    Brain *brain;
+};
+
 class TurnOnSpot : public StatefulActionNode
 {
 public:

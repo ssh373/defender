@@ -32,7 +32,8 @@
                         
                         <ReactiveSequence _while="gc_game_state=='INITIAL'" name="Initial">
                             <SetVelocity x="0.0" y="0.0" theta="0.0" />
-                            <SubTree ID="CamFindAndTrackBall" _autoremap="true" />
+                            <CamScanField _while="!odom_calibrated"/>
+                            <SubTree ID="CamFindAndTrackBall" _while="odom_calibrated" _autoremap="true" />
                             <SelfLocateEnterField />
                         </ReactiveSequence>
 

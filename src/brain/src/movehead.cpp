@@ -17,6 +17,7 @@ void RegisterMoveHeadNodes(BT::BehaviorTreeFactory &factory, Brain* brain){
     REGISTER_MOVEHEAD_BUILDER(CamFindBall) // 카메라로 공 찾기
     REGISTER_MOVEHEAD_BUILDER(CamTrackBall) // 카메라로 공 추적
     REGISTER_MOVEHEAD_BUILDER(CamFastScan) // 카메라로 공 찾기
+    REGISTER_MOVEHEAD_BUILDER(CamScanField) // 필드 스캔
     REGISTER_MOVEHEAD_BUILDER(TurnOnSpot) // 제자리 회전
     REGISTER_MOVEHEAD_BUILDER(GoBackInField) // 경기장 안으로 복귀
     
@@ -171,6 +172,25 @@ NodeStatus CamFastScan::onRunning()
     return NodeStatus::RUNNING;
 }
 
+NodeStatus CamScanField::tick()
+{
+    auto sec = brain->get_clock()->now().seconds();
+    auto msec = static_cast<unsigned long long>(sec * 1000);
+    double lowPitch, highPitch, leftYaw, rightYaw;
+    getInput("low_pitch", lowPitch);
+    getInput("high_pitch", highPitch);
+    getInput("left_yaw", leftYaw);
+    getInput("right_yaw", rightYaw);
+    int msecCycle;
+    getInput("msec_cycle", msecCycle);
+
+    int cycleTime = msec % msecCycle;
+    double pitch = cycleTime > (msecCycle / 2.0) ? lowPitch : highPitch;
+    double yaw = cycleTime < (msecCycle / 2.0) ? (leftYaw - rightYaw) * (2.0 * cycleTime / msecCycle) + rightYaw : (leftYaw - rightYaw) * (2.0 * (msecCycle - cycleTime) / msecCycle) + rightYaw;
+
+    brain->client->moveHead(pitch, yaw);
+    return NodeStatus::SUCCESS;
+}
 
 NodeStatus TurnOnSpot::onStart()
 {
