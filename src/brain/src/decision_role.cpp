@@ -241,7 +241,7 @@ NodeStatus DefenderDecide::tick() {
 
     // 레인 설정
     const double laneY = -2.5;
-    const double laneTol = 0.10;   // 필요시 파라미터로 빼도 됨
+    const double laneTol = 0.40;   // 필요시 파라미터로 빼도 됨
     bool inLane = std::fabs(pose.y - laneY) < laneTol;
 
     // 1) 공을 모르면 -> find
