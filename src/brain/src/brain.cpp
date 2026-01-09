@@ -872,7 +872,7 @@ void Brain::updateBallMemory(){
     }
 
     updateRelativePos(data->ball);
-    // updateRelativePos(data->tmBall);
+    updateRelativePos(data->tmBall);
     
     static Point lastBallPos = data->ball.posToField;
     static rclcpp::Time lastBallTime = data->ball.timePoint;
@@ -906,13 +906,13 @@ void Brain::updateBallMemory(){
         data->ballDetected,
         tree->getEntry<bool>("ball_location_known")
         );
-    // log->logBall(
-    //     "field/tmBall", 
-    //     data->tmBall.posToField, 
-    //     0xFFFF00FF,
-    //     tree->getEntry<bool>("tm_ball_pos_reliable"),
-    //     tree->getEntry<bool>("tm_ball_pos_reliable")
-    //     );
+    log->logBall(
+        "field/tmBall", 
+        data->tmBall.posToField, 
+        0xFFFF00FF,
+        tree->getEntry<bool>("tm_ball_pos_reliable"),
+        tree->getEntry<bool>("tm_ball_pos_reliable")
+        );
 }
 // 장애물 리스트를 매 주기마다 정리하고 BrainData에 다시 저장하는 함수
 // 장애물 리스트 업데이트 시 특수 상황 인지를 위한 함수 (공을 장애물로 인식할지 말지를 결정)
