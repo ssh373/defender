@@ -384,6 +384,8 @@ void BrainCommunication::unicastCommunication() {
         msg.thetaRb = brain->data->robotBallAngleToField;
         msg.cmdId = brain->data->tmMyCmdId;
         msg.cmd = brain->data->tmMyCmd;
+        msg.target = brain->data->target; //pass 목표지점 주고받기용 (추후 cmd통신을 통해 패스 요청도 확인가능) (수현 추가)
+
         log(format("ImAlive: %d, ImLead: %d, myCost: %.1f, myCmdId: %d, myCmd: %d", msg.isAlive, msg.isLead, msg.cost, msg.cmdId, msg.cmd));
 
         std::lock_guard<std::mutex> lock(_teammate_addresses_mutex);
@@ -558,6 +560,8 @@ void BrainCommunication::spinCommunicationReceiver() {
         tmStatus.timeLastCom = brain->get_clock()->now(); // 마지막 통신 시간 갱신
         tmStatus.cmd = msg.cmd; // 명령
         tmStatus.cmdId = msg.cmdId; // 명령 ID
+        tmStatus.target = msg.target; // pass 목표점
+        
 
         // 새로운 명령 수신 확인
         if (msg.cmdId > brain->data->tmCmdId) {
