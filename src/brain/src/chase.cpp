@@ -99,7 +99,7 @@ NodeStatus Chase::tick(){
     Pose2D target_f, target_r; 
     static string targetType = "direct"; 
     static double circleBackDir = 1.0; 
-    double dirThreshold = M_PI / 6;
+    double dirThreshold = M_PI / 2;
     if (targetType == "direct") dirThreshold *= 1.2;
     
     //side chase용 추가
@@ -133,7 +133,6 @@ NodeStatus Chase::tick(){
         cbDirThreshold -= 0.2 * circleBackDir; 
         circleBackDir = toPInPI(theta_br - kickDir) > cbDirThreshold ? 1.0 : -1.0;
         log(format("targetType = circle_back, circleBackDir = %.1f", circleBackDir));
-        
         double tanTheta = theta_br + circleBackDir * acos(min(1.0, safeDist/max(ballRange, 1e-5))); 
         target_f.x = ballPos.x + safeDist * cos(tanTheta);
         target_f.y = ballPos.y + safeDist * sin(tanTheta);
