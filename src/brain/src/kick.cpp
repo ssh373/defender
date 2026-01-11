@@ -62,16 +62,16 @@ NodeStatus CalcKickDir::tick(){
     // 반코트용 슛 방향 계산 ( 상대 골대가 음수라고 가정)
     // 추가해야 될 것 -> 수비 상황 판단
     // 그리고 항상 왼쪽이 양수일까?도 고민해보기
-    if (thetal - thetar < crossThreshold) {
-        brain->data->kickType = "cross";
-        color = 0xFF00FFFF;
-        // atan2( 목표Y - 공Y , 목표X - 공X )
-        // 반코트는 우리팀 진영을 상대팀으로 인식해야하므로 - 값이 들어감
-        brain->data->kickDir = atan2( 
-            0 - bPos.y, 
-            - (fd.length/2 - fd.penaltyDist/2) - bPos.x); // 앞에 - 붙였음
-    }
-    else { 
+    // if (thetal - thetar < crossThreshold) {
+    //     brain->data->kickType = "cross";
+    //     color = 0xFF00FFFF;
+    //     // atan2( 목표Y - 공Y , 목표X - 공X )
+    //     // 반코트는 우리팀 진영을 상대팀으로 인식해야하므로 - 값이 들어감
+    //     brain->data->kickDir = atan2( 
+    //         0 - bPos.y, 
+    //         - (fd.length/2 - fd.penaltyDist/2) - bPos.x); // 앞에 - 붙였음
+    // }
+    // else { 
         brain->data->kickType = "shoot";
         color = 0x00FF00FF;
         brain->data->kickDir = atan2(
@@ -80,7 +80,7 @@ NodeStatus CalcKickDir::tick(){
         );
         // 이것도 - 로 바꿈 + 0에서 M_PI로 바꿈
         if (brain->data->ball.posToField.x < - (brain->config->fieldDimensions.length / 2)) brain->data->kickDir = M_PI; 
-    }
+    // }
 
     brain->log->setTimeNow();
     brain->log->log(

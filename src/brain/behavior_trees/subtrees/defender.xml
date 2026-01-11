@@ -54,7 +54,7 @@
                         <SetVelocity _while="decision == 'wait'"/>
 
                         <!-- Chase -->
-                        <Chase _while="decision == 'chase'" vx_limit="0.9" vy_limit="0.2" vtheta_limit="1.0" dist="0.4" safe_dist="1.0" />
+                        <Chase _while="decision == 'chase'" vx_limit="0.9" vy_limit="0.2" vtheta_limit="1.0" dist="0.5" safe_dist="0.7" />
                         
                         <!-- Non-lead- 좌우만 따라가기 -->
                         <Chase _while="decision == 'side_chase'" vx_limit="0.0" vy_limit="0.5" vtheta_limit="0.0" dist="0.1" safe_dist="0.5" />
