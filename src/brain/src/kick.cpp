@@ -246,8 +246,8 @@ NodeStatus CalcPassDir::tick(){
     double maxScore = -99999.0;
     double tx, ty; // 타겟 좌표
     
-    for (double x = tmPos.x - 2; x <= tmPos.x + 2; x += 0.2){
-        for (double y = tmPos.y - 2; y <= tmPos.y + 2; y += 0.2){
+    for (double x = tmPos.x - 3; x <= tmPos.x + 3; x += 0.2){
+        for (double y = tmPos.y - 2.5; y <= tmPos.y + 2.5; y += 0.2){
             if (fabs(x) > fieldlimitx || fabs(y) > fieldlimity) continue; // 필드 범위를 벗어난다면 continue
             double passDist = norm(x - bPos.x, y - bPos.y);
             if (passDist < minpassThreshold || passDist > maxpassThreshold) continue; // 너무 숏패스, 롱패스는 시도안함
