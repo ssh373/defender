@@ -93,10 +93,10 @@ NodeStatus PredictBallTraj::tick()
 
     // 4-2) 공분산 예측: P = F P F^T + Q
     const double F[4][4] = {
-        { 1, 0,  dt, 0  },
-        { 0, 1,  0,  dt },
-        { 0, 0,  1,  0  },
-        { 0, 0,  0,  1  }
+        { 1, 0,  k*dt, 0  },
+        { 0, 1,  0,  k*dt },
+        { 0, 0,  k,  0  },
+        { 0, 0,  0,  k  }
     };
 
     const double sa2 = sigma_a * sigma_a;
@@ -226,29 +226,31 @@ NodeStatus PredictBallTraj::tick()
     Pred_ball.y = pred_y;
     brain->data->Pred_ball = Pred_ball;
 
-    // 6) 최종 위치 예측 (Final Stopping Position)
-    // 공이 멈출 때까지의 총 시간 t_stop = v / deceleration
-    // 여기서는 등비급수의 합 공식을 근사화하여 사용하거나 
-    // 단순 물리 공식을 사용합니다. (가속도 a를 약 0.5~1.0 m/s^2 사이로 설정)
+    // 6) 최종 위치 예측 (Final Stopping Position) - constant deceleration model
+    double a = 0.8; // 감속 크기 (m/s^2), 양수로 넣으세요
+    getInput("ball_deceleration", a);
+    a = std::max(a, 1e-3); // 0 방지
 
-    double acceleration = 0.8; // 바닥 마찰에 의한 감속 가속도 (m/s^2)
-    getInput("ball_deceleration", acceleration);
-
-    double speed = sqrt(vx_ * vx_ + vy_ * vy_);
-    double stop_dist = 0;
-    if (speed > 0.0005) { // 공이 움직이고 있을 때만 계산
-        stop_dist = (speed * speed) / (2.0 * acceleration);
-    }
-
-    double ux = vx_ / (speed + 1e-6); // 방향 단위 벡터
-    double uy = vy_ / (speed + 1e-6);
+    const double vx = vx_;
+    const double vy = vy_;
+    const double v  = std::sqrt(vx*vx + vy*vy);
 
     Pose2D Final_ball_pos;
-    Final_ball_pos.x = x_ + ux * stop_dist;
-    Final_ball_pos.y = y_ + uy * stop_dist;
+    Final_ball_pos.x = x_;
+    Final_ball_pos.y = y_;
 
-    // 이 값을 brain->data->Final_ball_pos 등에 저장하여 패스 받는 로봇이 사용하도록 함
-    brain->data->Final_ball_pos = Final_ball_pos;
+    if (v > 0.02) { // 너무 느릴 때는 정지로 간주(노이즈 방지, 임계값은 튜닝)
+        const double stop_dist = (v*v) / (2.0 * a);
+
+        const double ux = vx / v;
+        const double uy = vy / v;
+
+        Final_ball_pos.x = x_ + ux * stop_dist;
+        Final_ball_pos.y = y_ + uy * stop_dist;
+    }
+
+brain->data->Final_ball_pos = Final_ball_pos;
+
 
     // 7) 시각화 (rerun) - 필드 좌표계
     brain->log->setTimeNow();
@@ -261,16 +263,16 @@ NodeStatus PredictBallTraj::tick()
     const rerun::components::Vector2D measured_ball{(float)(mx - cx), (float)(-(my - cy))};
     const rerun::components::Vector2D predicted_ball{(float)(pred_x - cx), (float)(-(pred_y - cy))};
 
-    if (new_meas) { 
-    brain->log->log(
-        "field/measured_ball",
-        rerun::Arrows2D::from_vectors({measured_ball})
-            .with_origins({{-4.5, 0.0}})
-            .with_colors({0x00FF00FF})
-            .with_radii(0.01f)
-            .with_draw_order(30)
-    );
-    }
+    // if (new_meas) { 
+    // brain->log->log(
+    //     "field/measured_ball",
+    //     rerun::Arrows2D::from_vectors({measured_ball})
+    //         .with_origins({{-4.5, 0.0}})
+    //         .with_colors({0x00FF00FF})
+    //         .with_radii(0.01f)
+    //         .with_draw_order(30)
+    // );
+    // }
 
     brain->log->log(
         "field/predicted_ball",
@@ -285,7 +287,7 @@ NodeStatus PredictBallTraj::tick()
 
     brain->log->log(
         "field/final_stop_pos",
-        rerun::Points2D({{(float)Final_ball_pos.x, -(float)Final_ball_pos.y}}) // API 문법 수정
+        rerun::Points2D({{(float)Final_ball_pos.x, -(float)Final_ball_pos.y}}) 
             .with_colors({0xFF0000FF}) 
             .with_radii(0.05f)
     );
