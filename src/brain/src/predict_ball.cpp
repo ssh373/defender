@@ -236,8 +236,7 @@ NodeStatus PredictBallTraj::tick()
 
     double speed = sqrt(vx_ * vx_ + vy_ * vy_);
     double stop_dist = 0;
-
-    if (speed > 0.1) { // 공이 움직이고 있을 때만 계산
+    if (speed > 0.0005) { // 공이 움직이고 있을 때만 계산
         stop_dist = (speed * speed) / (2.0 * acceleration);
     }
 
