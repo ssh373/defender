@@ -44,7 +44,7 @@ PARAMS = {
     "w_y": 0.45,                 # prefer y = 0
 
     # opponent penalty near pass path
-    "opp_path_margin": 1.0,     # if distToPassPath < margin
+    "opp_path_margin": 1.15,     # if distToPassPath < margin
     "opp_penalty": 24.0,        # score -= (1 - dist/margin) * opp_penalty * confidence
     "opp_memory_sec": 5.0,      # confidenceFactor = max(0, (memory - elapsed)/memory)
 
@@ -328,12 +328,12 @@ def main():
     teammates = [
         Teammate(player_id=1, pos=Pose2D(1.0,  0.5), is_alive=True),  # me (ignored)
         Teammate(player_id=2, pos=Pose2D(3.5,  0.0), is_alive=True),
-        Teammate(player_id=3, pos=Pose2D(-1.0, 1.0), is_alive=True),
+        Teammate(player_id=3, pos=Pose2D(-0.5, 0.5), is_alive=True),
     ]
 
     opponents = [
         Opponent(pos=Pose2D(-3.5, 0.0), last_seen_sec_ago=1.0),
-        Opponent(pos=Pose2D(-0.3, 0.5), last_seen_sec_ago=0.0),
+        Opponent(pos=Pose2D(0.0, 1.5), last_seen_sec_ago=0.0),
         Opponent(pos=Pose2D(0.5, -0.5), last_seen_sec_ago=1.5),
     ]
 
