@@ -44,8 +44,7 @@
 
                          <ReactiveSequence _while="gc_game_state=='SET'" name="Set">
                             <SubTree ID="CamFindAndTrackBall" _autoremap="true" /> 
-                            <PredictBallTraj R_meas="0.02" sigma_a="2.0" horizon="0.8" k_friction="0.98" ball_deceleration="0.3" />
-                            <PredictBallTraj R_meas="0.02" sigma_a="2.0" horizon="0.8" k_friction="0.98" a_min="0.1" a_max="0.8" k_av="4.0" />
+                            <PredictBallTraj R_meas="0.02" sigma_a="2.0" horizon="0.8" k_friction="1.0" a_min="0.05" a_max="0.12" k_av="2.2" />
 
                             <ReactiveSequence>
                                 

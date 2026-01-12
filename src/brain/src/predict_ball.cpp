@@ -299,6 +299,20 @@ NodeStatus PredictBallTraj::tick()
     brain->log->log("debug/velocity", rerun::TextLog(oss.str()));
         }
 
+    // tick 끝부분(업데이트/예측 후) 어디든
+    static double prev_v = 0.0;
+    static bool has_prev_v = false;
+
+    if (has_prev_v && dt > 1e-3 && dt < 0.1) {
+    double a_est = (prev_v - v) / dt;  // 감속이므로 보통 +가 정상
+    std::ostringstream oss;
+    oss << "[A_EST] v_prev=" << prev_v << " v=" << v << " dt=" << dt << " a_est=" << a_est << " stop_dist=" << stop_dist;
+    brain->log->log("debug/a_est", rerun::TextLog(oss.str()));
+    }
+    prev_v = v;
+    has_prev_v = true;
+
+
     double ctPosx, ctPosy;
     getInput("ctPosx", ctPosx);
     getInput("ctPosy", ctPosy);
