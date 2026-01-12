@@ -226,10 +226,18 @@ NodeStatus PredictBallTraj::tick()
     Pred_ball.y = pred_y;
     brain->data->Pred_ball = Pred_ball;
 
-    // 6) 최종 위치 예측 (Final Stopping Position) - constant deceleration model
-    double a = 0.8; // 감속 크기 (m/s^2), 양수로 넣으세요
-    getInput("ball_deceleration", a);
-    a = std::max(a, 1e-3); // 0 방지
+    // 6) 최종 위치 예측 (Final Stopping Position) - a(v) exponential model
+    double a_min = 0.1;   // 고속에서 감속(작게)  (m/s^2)
+    double a_max = 0.8;   // 저속에서 감속(크게)  (m/s^2)
+    double k_av  = 4.0;   // v에 따른 전이 강도
+
+    getInput("a_min", a_min);
+    getInput("a_max", a_max);
+    getInput("k_av",  k_av);
+
+    a_min = std::max(a_min, 1e-3);
+    a_max = std::max(a_max, a_min + 1e-3);
+    k_av  = std::max(k_av,  1e-3);
 
     const double vx = vx_;
     const double vy = vy_;
@@ -238,9 +246,14 @@ NodeStatus PredictBallTraj::tick()
     Pose2D Final_ball_pos;
     Final_ball_pos.x = x_;
     Final_ball_pos.y = y_;
-    
-    if (v > 0.005) { // 너무 느릴 때는 정지로 간주(노이즈 방지, 임계값은 튜닝)
-        const double stop_dist = (v*v) / (2.0 * a);
+
+    double a_eff = a_min;  // 디버그용 기본값
+    double stop_dist = 0.0;
+
+    if (v > 0.005) {
+        // a(v) = a_min + (a_max-a_min)*exp(-k*v)
+        a_eff = a_min + (a_max - a_min) * std::exp(-k_av * v);
+        stop_dist = (v*v) / (2.0 * a_eff);
 
         const double ux = vx / v;
         const double uy = vy / v;
@@ -249,16 +262,14 @@ NodeStatus PredictBallTraj::tick()
         Final_ball_pos.y = y_ + uy * stop_dist;
     }
 
-  
-
-
     brain->data->Final_ball_pos = Final_ball_pos;
 
 
     // 7) 시각화 (rerun) - 필드 좌표계
     brain->log->setTimeNow();
 
-      {
+    // --- FINAL 디버그 로그도 a_eff 기반으로 바꾸기 ---
+    {
         double dx = Final_ball_pos.x - x_;
         double dy = Final_ball_pos.y - y_;
         double dF = std::hypot(dx, dy);
@@ -266,17 +277,15 @@ NodeStatus PredictBallTraj::tick()
         std::ostringstream oss;
         oss << "[FINAL_DBG] "
             << "v=" << v
-            << " a=" << a
-            << " stop_dist=" << ((v > 0.005) ? (v*v/(2.0*a)) : 0.0)
+            << " a_eff=" << a_eff
+            << " stop_dist=" << stop_dist
             << " | x_= (" << x_ << "," << y_ << ")"
             << " Final= (" << Final_ball_pos.x << "," << Final_ball_pos.y << ")"
             << " dF=" << dF;
 
-        brain->log->log(
-            "debug/final_ball",
-            rerun::TextLog(oss.str())
-        );
+        brain->log->log("debug/final_ball", rerun::TextLog(oss.str()));
     }
+
     {
     std::ostringstream oss;
     oss << "[VEL_DBG] "
