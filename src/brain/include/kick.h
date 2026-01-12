@@ -54,9 +54,9 @@ public:
 
     static PortsList providedPorts(){
         return {
-            InputPort<double>("min_pass_threshold", 3.0, "팀원과의 최대 거리"),
-            InputPort<double>("max_pass_threshold", 1.0, "팀원과의 최소 거리"),
-            InputPort<double>("score_threshold", 3.0, "패스를 주기로 결정할 score의 최소값"),
+            InputPort<double>("min_pass_threshold", 1.0, "팀원과의 최소 거리"),
+            InputPort<double>("max_pass_threshold", 4.0, "팀원과의 최대 거리"),
+            InputPort<double>("score_threshold", 6.0, "패스를 주기로 결정할 score의 최소값"),
 
             OutputPort<bool>("pass_found"),
             OutputPort<double>("pass_speed_limit"),

@@ -221,7 +221,7 @@ NodeStatus CalcPassDir::tick(){
         // 유효 거리 내에 있고, 가장 score가 높은 팀원 선택
         // 나랑 가까울 수록 높은 score, 전방에 있는(x좌표가 낮음) 선수일수록 높은 score
         if( dist > minpassThreshold && dist < maxpassThreshold){
-            double score = -dist - tmPos.x;
+            double score = -dist * 1.0 - tmPos.x * 1.2;
             if(score > maxTmSelectScore){
                 maxTmSelectScore = score;
                 bestTeammateIdx = i;
@@ -253,10 +253,10 @@ NodeStatus CalcPassDir::tick(){
             if (passDist < minpassThreshold || passDist > maxpassThreshold) continue; // 너무 숏패스, 롱패스는 시도안함
             
             double score = 10.0
-                        - (fabs(x - tmPos.x) * 0.5) // 팀원과의 거리
-                        - (fabs(y - tmPos.y) * 0.5) // 팀원과의 거리
-                        - x * 0.3 // x좌표가 낮을수록 높은 score
-                        - (fabs(y) * 0.1); // y좌표가 낮을수록 높은 score
+                        - (fabs(x - tmPos.x) * 1.1) // 팀원과의 거리
+                        - (fabs(y - tmPos.y) * 0.7) // 팀원과의 거리
+                        - x * 0.95 // x좌표가 낮을수록 높은 score
+                        - (fabs(y) * 0.45); // y좌표가 낮을수록 높은 score
             
             Line passPath = {bPos.x, bPos.y, x, y};
 
@@ -270,8 +270,8 @@ NodeStatus CalcPassDir::tick(){
                 if (confidenceFactor <= 0.0) continue;
 
                 double distToPassPath = pointMinDistToLine({opponent.posToField.x, opponent.posToField.y}, passPath);
-                if (distToPassPath < 1.0){ // 경로선분 1미터 이내에 opponent가 있다면
-                    score -= (1.0 - distToPassPath) * 20.0 * confidenceFactor; // 추가
+                if (distToPassPath < 1.15){ // 경로선분 1.15미터 이내에 opponent가 있다면
+                    score -= (1.15 - distToPassPath) * 24.0 * confidenceFactor; // 추가
                 }
                 
             }
