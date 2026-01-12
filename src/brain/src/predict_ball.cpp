@@ -286,7 +286,7 @@ NodeStatus PredictBallTraj::tick()
 
     brain->log->log(
         "field/final_stop_pos",
-        rerun::Points2D({{(float)Final_ball_pos.x, (float)Final_ball_pos.y}}) // API 문법 수정
+        rerun::Points2D({{(float)Final_ball_pos.x, -(float)Final_ball_pos.y}}) // API 문법 수정
             .with_colors({0xFF0000FF}) 
             .with_radii(0.05f)
     );
