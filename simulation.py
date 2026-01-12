@@ -38,13 +38,13 @@ PASS_PARAMS = {
 
     # grid around chosen teammate
     "grid_half_xrange": 3.0,
-    "grid_half_yrange": 2.0,
+    "grid_half_yrange": 2.5,
     "grid_step": 0.2,
 
     # base score terms
     "base_score": 10.0,
     "w_abs_dx": 1.1,
-    "w_abs_dy": 0.7,
+    "w_abs_dy": 0.7, 
     "w_x": 0.95,
     "w_y": 0.45,
 
@@ -54,7 +54,7 @@ PASS_PARAMS = {
     "opp_memory_sec": 5.0,
 
     # decision threshold
-    "score_threshold": 6.0,
+    "score_threshold": 6.5,
 }
 
 # --- Striker off-the-ball params (same values you provided) ---
@@ -70,9 +70,9 @@ ST_PARAMS = {
     "goal_area_width": 3.0,
 
     "dist_from_goal": 2.0,
-    "base_x_weight": 0.0,
-    "center_y_weight": 0.6,
-    "defender_dist_weight": 1.0,
+    "base_x_weight": 5.0,
+    "center_y_weight": 3.0,
+    "defender_dist_weight": 20.0,
     "defender_dist_cap": 3.0,
 
     "hysteresis_x_weight": 3.0,
@@ -83,11 +83,11 @@ ST_PARAMS = {
 
     "opp_memory_sec": 5.0,
 
-    "pass_penalty_weight": 5.0,
+    "pass_penalty_weight": 15.0,
     "shot_penalty_weight": 3.0,
     "movement_penalty_weight": 30.0,
     "symmetry_weight": 10.0,
-    "ball_dist_weight": 1.5,
+    "ball_dist_weight": 3.0,
     "forward_weight": 5.2,
 
     "path_confidence": 0.5,
@@ -101,7 +101,7 @@ SIM = {
     "dt": 0.1,                 # seconds per tick
     "player_speed": 0.5,       # m/s (all move at 0.5 or stop)
     "user_step": 0.1 * 0.5,    # dt * speed = 0.05m per keypress
-    "score_vmin": -30.0,       # FIXED colorbar range
+    "score_vmin": -20.0,       # FIXED colorbar range
     "score_vmax": +10.0,       # FIXED colorbar range
 }
 
@@ -643,13 +643,13 @@ def main():
     # ===== 초기 위치를 여기서 간단히 설정 =====
     init_ball    = Pose2D(x=0.0, y=0.0)
     init_passer  = Pose2D(x=0.1, y=0.0)   # 패서(수비수)
-    init_striker = Pose2D(x=-1.0, y=-2.0)   # 스트라이커
+    init_striker = Pose2D(x=-3.0, y=3.0)   # 스트라이커
     init_gk     = Pose2D(x=3.5,  y=0.0)
-    init_opp_user = Pose2D(x=-2.5, y=-1.0)  # 방향키로 조종할 상대 수비 1명
-    init_opp_gk   = Pose2D(x=-3.5, y=0.0)   # 고정 골키퍼(0.0초 관측)
+    init_opp_user = Pose2D(x=-1.8, y=0.5)  # 방향키로 조종할 상대 수비 1명
+    init_opp_gk   = Pose2D(x=-3.8, y=0.5)   # 고정 골키퍼(0.0초 관측)
 
     other_opps = [
-        (-1.5, 0.5, 1.0),  # (x,y,last_seen_sec_ago)
+        (-3.4, 2.0, 1.0),  # (x,y,last_seen_sec_ago)
     ]
 
     sim = IntegratedSim(
