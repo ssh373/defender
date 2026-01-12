@@ -480,7 +480,9 @@ void detectProcessRobots(const vector<GameObject> &robotObjs, const std::shared_
     // Identify Teammates -> Moved to brain.cpp
     // identifyTeammates(robots, data);
 
-    data->setRobots(robots);
+    //data->setRobots(robots);
+    // 1.10 - 로봇 메모리 업데이트
+    data->updateRobots(robots);
 }
 
 void identifyTeammates(std::vector<GameObject>& robots, const std::shared_ptr<BrainData> &data) {

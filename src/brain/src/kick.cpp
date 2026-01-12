@@ -260,15 +260,15 @@ NodeStatus CalcPassDir::tick(){
             for (const auto& opponent : Opponents){
                 if (opponent.label != "Opponent") continue; // 상대팀이 아니면 스킵
                 
-                // TODO : striker 코드에서 메모리 부분 받아오고 나면 아래 주석해제 -> 적용합시다
-                // rclcpp::Time now = brain->get_clock()->now();
-                // double elapsed = (now - opponent.timePoint).seconds(); // 수비수를 마지막으로 본지 몇초 지났나
-                // double confidenceFactor = std::max(0.0, (5.0 - elapsed) / 5.0); // 시간이 지날수록 신뢰도 떨어지게
-                // if (confidenceFactor <= 0.0) continue;
+                // TODO : striker 코드에서 메모리 부분 받아오고 나면 아래 주석해제 -> 적용합시다 -> 함
+                rclcpp::Time now = brain->get_clock()->now();
+                double elapsed = (now - opponent.timePoint).seconds(); // 수비수를 마지막으로 본지 몇초 지났나
+                double confidenceFactor = std::max(0.0, (5.0 - elapsed) / 5.0); // 시간이 지날수록 신뢰도 떨어지게
+                if (confidenceFactor <= 0.0) continue;
 
                 double distToPassPath = pointMinDistToLine({opponent.posToField.x, opponent.posToField.y}, passPath);
                 if (distToPassPath < 1.0){ // 경로선분 1미터 이내에 opponent가 있다면
-                    score -= (1.0 - distToPassPath) * 20.0; // * confidenceFactor 나중에 추가합시다
+                    score -= (1.0 - distToPassPath) * 20.0; * confidenceFactor // 추가
                 }
                 
             }

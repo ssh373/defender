@@ -70,6 +70,9 @@ struct BrainData {
         _robots = newVec;
     }
 
+    // 1.10 - 로봇 메모리 업데이트
+    void updateRobots(const vector<GameObject>& newObservations, double retentionTime = 3.0);
+
     Pose2D robot2field(const Pose2D &poseToRobot);
     Pose2D field2robot(const Pose2D &poseToField);
 
