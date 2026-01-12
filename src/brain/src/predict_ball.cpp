@@ -301,8 +301,6 @@ NodeStatus PredictBallTraj::tick()
 
     // tick 끝부분(업데이트/예측 후) 어디든
     static double prev_v = 0.0;
-    static bool has_prev_v = false;
-
     {
     double a_est = (prev_v - v) / dt;  // 감속이므로 보통 +가 정상
     std::ostringstream oss;
@@ -310,7 +308,6 @@ NodeStatus PredictBallTraj::tick()
     brain->log->log("debug/a_est", rerun::TextLog(oss.str()));
     }
     prev_v = v;
-    has_prev_v = true;
 
 
     double ctPosx, ctPosy;
