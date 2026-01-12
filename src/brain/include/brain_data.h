@@ -112,6 +112,9 @@ struct BrainData {
     int sendId = 0;
     rclcpp::Time sendTime;
     
+    // predictball
+    Pose2D Pred_ball;        // 미래 위치 (horizon초 뒤)
+    Pose2D Final_ball_pos;
     
     /* ---------------------------------------------------------------------------- 필드 라인 관련 파라미터 -------------------------------------------------------------------- */
     
