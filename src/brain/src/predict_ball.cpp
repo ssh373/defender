@@ -238,8 +238,8 @@ NodeStatus PredictBallTraj::tick()
     Pose2D Final_ball_pos;
     Final_ball_pos.x = x_;
     Final_ball_pos.y = y_;
-
-    if (v > 0.02) { // 너무 느릴 때는 정지로 간주(노이즈 방지, 임계값은 튜닝)
+    
+    if (v > 0.005) { // 너무 느릴 때는 정지로 간주(노이즈 방지, 임계값은 튜닝)
         const double stop_dist = (v*v) / (2.0 * a);
 
         const double ux = vx / v;
@@ -249,11 +249,46 @@ NodeStatus PredictBallTraj::tick()
         Final_ball_pos.y = y_ + uy * stop_dist;
     }
 
-brain->data->Final_ball_pos = Final_ball_pos;
+  
+
+
+    brain->data->Final_ball_pos = Final_ball_pos;
 
 
     // 7) 시각화 (rerun) - 필드 좌표계
     brain->log->setTimeNow();
+
+      {
+        double dx = Final_ball_pos.x - x_;
+        double dy = Final_ball_pos.y - y_;
+        double dF = std::hypot(dx, dy);
+
+        std::ostringstream oss;
+        oss << "[FINAL_DBG] "
+            << "v=" << v
+            << " a=" << a
+            << " stop_dist=" << ((v > 0.005) ? (v*v/(2.0*a)) : 0.0)
+            << " | x_= (" << x_ << "," << y_ << ")"
+            << " Final= (" << Final_ball_pos.x << "," << Final_ball_pos.y << ")"
+            << " dF=" << dF;
+
+        brain->log->log(
+            "debug/final_ball",
+            rerun::TextLog(oss.str())
+        );
+    }
+    {
+    std::ostringstream oss;
+    oss << "[VEL_DBG] "
+        << "new_meas=" << (new_meas ? 1 : 0)
+        << " dt=" << dt
+        << " mx-my=(" << mx << "," << my << ")"
+        << " x_-y_= (" << x_ << "," << y_ << ")"
+        << " vx_=" << vx_ << " vy_=" << vy_
+        << " v=" << std::sqrt(vx_*vx_ + vy_*vy_);
+
+    brain->log->log("debug/velocity", rerun::TextLog(oss.str()));
+        }
 
     double ctPosx, ctPosy;
     getInput("ctPosx", ctPosx);
@@ -274,14 +309,14 @@ brain->data->Final_ball_pos = Final_ball_pos;
     // );
     // }
 
-    brain->log->log(
-        "field/predicted_ball",
-        rerun::Arrows2D::from_vectors({predicted_ball})
-            .with_origins({{-4.5, 0.0}})
-            .with_colors({0xFFAA00FF})
-            .with_radii(0.015f)
-            .with_draw_order(32)
-    );
+    // brain->log->log(
+    //     "field/predicted_ball",
+    //     rerun::Arrows2D::from_vectors({predicted_ball})
+    //         .with_origins({{-4.5, 0.0}})
+    //         .with_colors({0xFFAA00FF})
+    //         .with_radii(0.015f)
+    //         .with_draw_order(32)
+    // );
 
     const rerun::components::Vector2D final_ball_vec{(float)(Final_ball_pos.x - cx), (float)(-(Final_ball_pos.y - cy))};
 
