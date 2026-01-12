@@ -41,7 +41,7 @@ NodeStatus GoToPose::tick(){
 
     double dist = norm(errorx, errory); // 골대중앙까지의 거리
     double controlx, controly, controltheta;
-    double Kp = 4.0;
+    double Kp = 2.0;
     double linearFactor = 1.0 / (1.0 + exp(-6.0 * (dist - 0.5)));
     
     if(dist > stop_Threshold){// 직진

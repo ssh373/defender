@@ -32,11 +32,11 @@
                <ReactiveSequence>
                   <!-- 공 추적 -->
                   <SubTree ID="CamFindAndTrackBall" _autoremap="true" />
+                  <PredictBallTraj R_meas="0.02" sigma_a="2.0" horizon="0.8" k_friction="0.98" ball_deceleration="0.8" />
                   
                   <!-- 킥 방향 계산 (패스 방향) -->
                   <CalcPassDir max_pass_threshold="8.0" min_pass_threshold="1.0" pass_found="{pass_found}" pass_speed_limit="{pass_speed_limit}"/>
                   <CalcKickDir _while="!pass_found" cross_threshold="0.4"/>
-
                   <Sequence>
                      
                      <ReactiveSequence>

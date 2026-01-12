@@ -60,6 +60,7 @@ set(SOURCE_FILES
   src/decision_role.cpp
   src/gotopose.cpp
   src/checkandstandup.cpp
+  src/predict_ball.cpp
 )
 
 add_executable(brain_node ${SOURCE_FILES})

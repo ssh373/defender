@@ -46,6 +46,7 @@
 #include "decision_role.h"
 #include "gotopose.h"
 #include "checkandstandup.h"
+#include "predict_ball.h"
 
 // Forward declaration to avoid circular dependency
 class BrainCommunication;
@@ -94,7 +95,8 @@ public:
     void registerAdjustNodes(BT::BehaviorTreeFactory &factory){RegisterAdjustNodes(factory, this);}
     void registerGotoposeNodes(BT::BehaviorTreeFactory &factory){RegisterGotoposeNodes(factory, this);}
     void registerCheckAndStandUpNodes(BT::BehaviorTreeFactory &factory){RegisterCheckAndStandUpNodes(factory, this);}
-    
+    void registerPredictballNodes(BT::BehaviorTreeFactory &factory){RegisterPredictballNodes(factory, this);}
+
     // ROS callback 함수
     void gameControlCallback(const game_controller_interface::msg::GameControlData &msg);
     void detectionsCallback(const vision_interface::msg::Detections &msg);
