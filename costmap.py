@@ -41,7 +41,7 @@ PARAMS = {
     "w_abs_dx": 1.1,            # -(abs(x-tm.x) * w_abs_dx)
     "w_abs_dy": 0.7,            # -(abs(y-tm.y) * w_abs_dy)
     "w_x": 0.95,                 # -(x * w_x)  (x lower -> higher score, if field direction matches)
-    "w_y": 0.25,                 # prefer y = 0
+    "w_y": 0.45,                 # prefer y = 0
 
     # opponent penalty near pass path
     "opp_path_margin": 1.0,     # if distToPassPath < margin
@@ -328,13 +328,13 @@ def main():
     teammates = [
         Teammate(player_id=1, pos=Pose2D(1.0,  0.5), is_alive=True),  # me (ignored)
         Teammate(player_id=2, pos=Pose2D(3.5,  0.0), is_alive=True),
-        Teammate(player_id=3, pos=Pose2D(0.0, -1.0), is_alive=True),
+        Teammate(player_id=3, pos=Pose2D(-1.0, 1.0), is_alive=True),
     ]
 
     opponents = [
         Opponent(pos=Pose2D(-3.5, 0.0), last_seen_sec_ago=1.0),
-        Opponent(pos=Pose2D(-0.5, 1.0), last_seen_sec_ago=0.0),
-        Opponent(pos=Pose2D(1.0, -0.5), last_seen_sec_ago=1.5),
+        Opponent(pos=Pose2D(-0.3, 0.5), last_seen_sec_ago=0.0),
+        Opponent(pos=Pose2D(0.5, -0.5), last_seen_sec_ago=1.5),
     ]
 
     visualize(ball, teammates, opponents, my_player_id, PARAMS)
