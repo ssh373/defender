@@ -48,7 +48,7 @@
 
                             <ReactiveSequence>
                                 
-                                <!-- <SubTree ID="Defender" _autoremap="true" _while="player_role == 'defender'" /> -->
+                                <SubTree ID="Defender" _autoremap="true" _while="player_role == 'defender'" />
                                 <!-- <SubTree ID="DefenderAssist" _autoremap="true" _while="player_role == 'defender'" /> -->
                                 
                                 <SubTree ID="Striker" _autoremap="true" _while="player_role == 'striker'" />
