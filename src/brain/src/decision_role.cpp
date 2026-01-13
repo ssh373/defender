@@ -239,10 +239,13 @@ NodeStatus DefenderDecide::tick() {
 
     auto pose = brain->data->robotPoseToField;
 
+    auto predict=brain->data->Final_ball_pos;
+
     // 레인 설정
     const double laneY = 2.5;
     const double laneTol = 0.10;   // 필요시 파라미터로 빼도 됨
     bool inLane = std::fabs(pose.y - laneY) < laneTol;
+
 
     // 1) 공을 모르면 -> find
     if (!(iKnowBallPos || tmBallPosReliable)) {
@@ -271,9 +274,26 @@ NodeStatus DefenderDecide::tick() {
         // 멀면 chase
         bool wasChasing = (lastDecision == "chase");
         if (ballRange > chaseRangeThreshold * (wasChasing ? 0.9 : 1.0)) {
-            newDecision = "chase";
-            color = 0x0000FFFF;
+            // (선택) 공이 빠를 때만 side_chase로
+            // double ballSpeed = brain->data->ball.speed;   // 없으면 생략 가능
+            // bool fastBall = (ballSpeed > 0.8);            // 임계값은 튜닝
+
+            // if (predict.y > 1.5 && fastBall) {            // 1.0도 튜닝
+            if (std::fabs(predict.y - laneY) < 1.5) {
+                newDecision = "side_chase";
+                color = 0x00FFFFFF;
+
+                if (ballX < 0.4) {
+                    newDecision = "chase";  // 레인 깨기
+                    color = 0x0000FFFF;
+                }
+
+            } else {
+                newDecision = "chase";
+                color = 0x0000FFFF;
+            }
         }
+
         // 킥(패스) 조건
         else if (
             (reachedKickDir) &&

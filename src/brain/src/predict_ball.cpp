@@ -265,45 +265,45 @@ NodeStatus PredictBallTraj::tick()
     brain->log->setTimeNow();
 
     // --- FINAL 디버그 로그도 a_eff 기반으로 바꾸기 ---
-    {
-        double dx = Final_ball_pos.x - x_;
-        double dy = Final_ball_pos.y - y_;
-        double dF = std::hypot(dx, dy);
+    // {
+    //     double dx = Final_ball_pos.x - x_;
+    //     double dy = Final_ball_pos.y - y_;
+    //     double dF = std::hypot(dx, dy);
 
-        std::ostringstream oss;
-        oss << "[FINAL_DBG] "
-            << "v=" << v
-            << " a_eff=" << a_eff
-            << " stop_dist=" << stop_dist
-            << " | x_= (" << x_ << "," << y_ << ")"
-            << " Final= (" << Final_ball_pos.x << "," << Final_ball_pos.y << ")"
-            << " dF=" << dF;
+    //     std::ostringstream oss;
+    //     oss << "[FINAL_DBG] "
+    //         << "v=" << v
+    //         << " a_eff=" << a_eff
+    //         << " stop_dist=" << stop_dist
+    //         << " | x_= (" << x_ << "," << y_ << ")"
+    //         << " Final= (" << Final_ball_pos.x << "," << Final_ball_pos.y << ")"
+    //         << " dF=" << dF;
 
-        brain->log->log("debug/final_ball", rerun::TextLog(oss.str()));
-    }
+    //     brain->log->log("debug/final_ball", rerun::TextLog(oss.str()));
+    // }
 
-    {
-    std::ostringstream oss;
-    oss << "[VEL_DBG] "
-        << "new_meas=" << (new_meas ? 1 : 0)
-        << " dt=" << dt
-        << " mx-my=(" << mx << "," << my << ")"
-        << " x_-y_= (" << x_ << "," << y_ << ")"
-        << " vx_=" << vx_ << " vy_=" << vy_
-        << " v=" << std::sqrt(vx_*vx_ + vy_*vy_);
+    // {
+    // std::ostringstream oss;
+    // oss << "[VEL_DBG] "
+    //     << "new_meas=" << (new_meas ? 1 : 0)
+    //     << " dt=" << dt
+    //     << " mx-my=(" << mx << "," << my << ")"
+    //     << " x_-y_= (" << x_ << "," << y_ << ")"
+    //     << " vx_=" << vx_ << " vy_=" << vy_
+    //     << " v=" << std::sqrt(vx_*vx_ + vy_*vy_);
 
-    brain->log->log("debug/velocity", rerun::TextLog(oss.str()));
-        }
+    // brain->log->log("debug/velocity", rerun::TextLog(oss.str()));
+    //     }
 
-    // tick 끝부분(업데이트/예측 후) 어디든
-    static double prev_v = 0.0;
-    {
-    double a_est = (prev_v - v) / dt;  // 감속이므로 보통 +가 정상
-    std::ostringstream oss;
-    oss << "[A_EST] v_prev=" << prev_v << " v=" << v << " dt=" << dt << " a_est=" << a_est << " stop_dist=" << stop_dist;
-    brain->log->log("debug/a_est", rerun::TextLog(oss.str()));
-    }
-    prev_v = v;
+    // // tick 끝부분(업데이트/예측 후) 어디든
+    // static double prev_v = 0.0;
+    // {
+    // double a_est = (prev_v - v) / dt;  // 감속이므로 보통 +가 정상
+    // std::ostringstream oss;
+    // oss << "[A_EST] v_prev=" << prev_v << " v=" << v << " dt=" << dt << " a_est=" << a_est << " stop_dist=" << stop_dist;
+    // brain->log->log("debug/a_est", rerun::TextLog(oss.str()));
+    // }
+    // prev_v = v;
 
 
     double ctPosx, ctPosy;
