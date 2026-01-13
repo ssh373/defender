@@ -21,10 +21,6 @@ NodeStatus PredictBallTraj::tick()
     double P0_pos;    // 초기 위치 분산
     double P0_vel;    // 초기 속도 분산
     
-    // 4) 예측 단계 수정 (감속 모델 적용)
-    double k = 0.95; // 감속 계수 (매 틱마다 속도가 5%씩 감소, 실험을 통해 조정 필요)
-    getInput("k_friction", k);
-
     getInput("R_meas",  R_meas);
     getInput("sigma_a", sigma_a);
     getInput("P0_pos",  P0_pos);
@@ -86,17 +82,17 @@ NodeStatus PredictBallTraj::tick()
 
     // 4) 예측 단계 (CV: 필드 좌표계)
     // 4-1) 상태 예측
-    const double vx_pred = vx_ * k;
-    const double vy_pred = vy_ * k;
+    const double vx_pred = vx_;
+    const double vy_pred = vy_;
     const double x_pred  = x_ + vx_pred * dt;
     const double y_pred  = y_ + vy_pred * dt;
 
     // 4-2) 공분산 예측: P = F P F^T + Q
     const double F[4][4] = {
-        { 1, 0,  k*dt, 0  },
-        { 0, 1,  0,  k*dt },
-        { 0, 0,  k,  0  },
-        { 0, 0,  0,  k  }
+        { 1, 0,  dt, 0  },
+        { 0, 1,  0,  dt },
+        { 0, 0,  1,  0  },
+        { 0, 0,  0,  1  }
     };
 
     const double sa2 = sigma_a * sigma_a;
