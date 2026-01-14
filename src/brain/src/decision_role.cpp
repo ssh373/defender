@@ -283,7 +283,7 @@ NodeStatus DefenderDecide::tick() {
                 newDecision = "side_chase";
                 color = 0x00FFFFFF;
 
-                if (ballY < 0.4) {
+                if (std::fabs(ballY) < 0.4) {
                     newDecision = "chase";  // 레인 깨기
                     color = 0x0000FFFF;
                 }
