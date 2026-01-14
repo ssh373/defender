@@ -390,8 +390,8 @@ NodeStatus DefenderDecide::tick() {
     brain->log->logToScreen(
         "tree/Defend",
         format(
-            "Decision: %s ballrange: %.2f ballyaw: %.2f kickDir: %.2f rbDir: %.2f lead: %d", 
-            newDecision.c_str(), ballRange, ballYaw, kickDir, dir_rb_f, brain->data->tmImLead
+            "Decision: %s ballrange: %.2f ballyaw: %.2f ballX:%.2f ballY: %.2f kickDir: %.2f rbDir: %.2f lead: %d", 
+            newDecision.c_str(), ballRange, ballYaw, ballX, ballY, kickDir, dir_rb_f, brain->data->tmImLead
         ),
         color
     );
