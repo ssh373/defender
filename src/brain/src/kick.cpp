@@ -223,11 +223,8 @@ NodeStatus CalcPassDir::tick(){
     }
 
     // 패스가 가능한지 ? 아니라면 다음으로 (bestTeammateIdx가 한명이라도 있고, 목표 범위 내에 로봇이 왔는지 확인)
-    // bool passFound = (bestTeammateIdx != -1);
-    bool passFound = true;
-    if (bestTeammateIdx == -1) bestTeammateIdx = 0; // 에러 방지를 위해 인덱스 강제 지정
+    bool passFound = (bestTeammateIdx != -1);
 
-    
     setOutput("pass_found", passFound);
 
     if(!passFound){
@@ -236,13 +233,6 @@ NodeStatus CalcPassDir::tick(){
     
     brain->data->kickType = "pass"; // 킥 타입 설정
     auto tmPos = brain->data->tmStatus[bestTeammateIdx].robotPoseToField;
-    
-
-    //------------ 한 대용 임시
-    tmPos.x = -2.0;
-    tmPos.y = -2.5;
-    //------------------------
-
 
     double offset = 0.;
     // 골대 중심 좌표

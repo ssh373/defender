@@ -1601,8 +1601,7 @@ void Brain::handleCooperation() {
     get_parameter("strategy.cooperation.ball_control_cost_threshold", BALL_CONTROL_COST_THRESHOLD);
 
 		// 내 cost가 그거보다 크면 팀원이 lead, 아니면 내가 lead
-    // if (tmMinCost < BALL_CONTROL_COST_THRESHOLD && data->tmMyCost > tmMinCost) {
-    if (data->tmMyCost > 2.5){
+    if (tmMinCost < BALL_CONTROL_COST_THRESHOLD && data->tmMyCost > tmMinCost) {
         data->tmImLead = false;
         tree->setEntry<bool>("is_lead", false);
         log_("I am not lead");

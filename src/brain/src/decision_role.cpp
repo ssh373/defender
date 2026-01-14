@@ -274,12 +274,8 @@ NodeStatus DefenderDecide::tick() {
         // 멀면 chase
         bool wasChasing = (lastDecision == "chase");
         if (ballRange > chaseRangeThreshold * (wasChasing ? 0.9 : 1.0)) {
-            // (선택) 공이 빠를 때만 side_chase로
-            // double ballSpeed = brain->data->ball.speed;   // 없으면 생략 가능
-            // bool fastBall = (ballSpeed > 0.8);            // 임계값은 튜닝
 
-            // if (predict.y > 1.5 && fastBall) {            // 1.0도 튜닝
-            if (std::fabs(predict.y - laneY) < 1.5) {
+            if (std::fabs(predict.y - laneY) < 1.0) {
                 newDecision = "side_chase";
                 color = 0x00FFFFFF;
 
