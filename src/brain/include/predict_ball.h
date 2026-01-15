@@ -24,7 +24,7 @@ public:
             InputPort<double>("horizon", 0.5, "horizen초 뒤의 공을 예측"),
             InputPort<double>("ctPosx", -4.5, "골대중앙의 위치"),
             InputPort<double>("ctPosy", 0.0, "골대중앙의 위치"),
-            InputPort<double>("a_min", 0.8, "(m/s^2)"),
+            InputPort<double>("a_friction", 0.8, "(m/s^2)"),
         };
     }
 

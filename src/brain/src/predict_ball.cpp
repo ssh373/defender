@@ -240,9 +240,27 @@ NodeStatus PredictBallTraj::tick()
     double horizon = 0.5;
     getInput("horizon", horizon);
 
+    double a_friction = 0.1;
+    getInput("a_friction", a_friction);
+
     const double h2 = horizon*horizon;
-    const double pred_x = x_ + vx_*horizon + 0.5*ax_*h2;
-    const double pred_y = y_ + vy_*horizon + 0.5*ay_*h2;
+
+    const double v = std::sqrt(vx_ * vx_ + vy_ * vy_);
+
+    double pred_x, pred_y;
+
+    if (v > 0.05) {
+        const double ux = vx_ / v;
+        const double uy = vy_ / v;
+
+        // ax_, ay_ 대신 속도 반대 방향의 상수 마찰(a_friction) 사용
+        // 공식: s = vt + 0.5at^2 (단, a는 속도 반대 방향이므로 -a_friction)
+        pred_x = x_ + vx_ * horizon - 0.5 * ux * a_friction * h2;
+        pred_y = y_ + vy_ * horizon - 0.5 * uy * a_friction * h2;
+    } else {
+        pred_x = x_;
+        pred_y = y_;
+    }
 
     // Pose2D로 변환 및 저장 (필드 좌표계)
     Pose2D Pred_ball;
@@ -251,9 +269,7 @@ NodeStatus PredictBallTraj::tick()
     brain->data->Pred_ball = Pred_ball;
 
     // 6) 최종 위치 예측 (Final Stopping Position)
-    double a_min = 0.1;
 
-    getInput("a_min", a_min);
 
     const double vx = vx_;
     const double vy = vy_;
@@ -263,32 +279,24 @@ NodeStatus PredictBallTraj::tick()
     Final_ball_pos.x = x_;
     Final_ball_pos.y = y_;
 
-    double a_eff = a_min;  // 디버그용 기본값
+    double a_eff = a_friction;  // 디버그용 기본값
     double stop_dist = 0.0;
 
-    if (v > 0.005) {
+    if (v > 0.05) {
         const double ux = vx / v;
         const double uy = vy / v;
         
-        const double a_t_signed = ax_*ux + ay_*uy;
-        double a_dec = -a_t_signed;
+        stop_dist = (v * v) / (2.0 * a_friction);
 
         // 너무 작으면 폭주 방지
-        a_dec = std::max(a_dec, a_min);
-
-
-        stop_dist = (v*v) / (2.0 * a_dec);
-
         Final_ball_pos.x = x_ + ux * stop_dist;
         Final_ball_pos.y = y_ + uy * stop_dist;
 
         std::ostringstream oss;
-        oss << "[BALL_FINAL_DBG] "
+        oss << "[BALL_FINAL_FIXED] "
             << "v=" << v
-            << " | ax=" << ax_ << " ay=" << ay_
-            << " | a_t=" << a_t_signed
-            << " | a_dec=" << a_dec
-            << " | stop_dist=" << stop_dist;
+            << " | a_const=" << a_friction
+            << " | stop_dist=" << stop_dist;    
 
         brain->log->log("debug/final_ball_dbg", rerun::TextLog(oss.str()));
     }
