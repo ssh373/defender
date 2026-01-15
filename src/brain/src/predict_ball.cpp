@@ -287,7 +287,7 @@ NodeStatus PredictBallTraj::tick()
             << "v=" << v
             << " | ax=" << ax_ << " ay=" << ay_
             << " | a_t=" << a_t_signed
-            << " | a_dec=" << a_dec_dbg
+            << " | a_dec=" << a_dec
             << " | stop_dist=" << stop_dist;
 
         brain->log->log("debug/final_ball_dbg", rerun::TextLog(oss.str()));
