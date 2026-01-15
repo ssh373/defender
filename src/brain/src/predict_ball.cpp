@@ -245,7 +245,7 @@ NodeStatus PredictBallTraj::tick()
 
     const double h2 = horizon*horizon;
 
-    const double v = std::sqrt(vx_ * vx_ + vy_ * vy_);
+    double v = std::sqrt(vx_ * vx_ + vy_ * vy_);
 
     double pred_x, pred_y;
 
@@ -273,7 +273,6 @@ NodeStatus PredictBallTraj::tick()
 
     const double vx = vx_;
     const double vy = vy_;
-    const double v  = std::sqrt(vx*vx + vy*vy);
 
     Pose2D Final_ball_pos;
     Final_ball_pos.x = x_;
