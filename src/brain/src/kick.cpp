@@ -303,7 +303,7 @@ NodeStatus CalcPassDir::tick(){
     );
 
 
-    brain->log->logToScreen("debug/Pass", format("Passing to TM %d at Dist %.2f to (%.2f, %.2f)", bestTeammateIdx+1, minDist, tx, ty), 0x00FF00FF);
+    brain->log->logToScreen("debug/Pass", format("Passing to TM 00 at Dist %.2f to (%.2f, %.2f)", minDist, tx, ty), 0x00FF00FF);
 
     // 시각화
     brain->log->setTimeNow();

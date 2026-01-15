@@ -281,6 +281,16 @@ NodeStatus PredictBallTraj::tick()
 
         Final_ball_pos.x = x_ + ux * stop_dist;
         Final_ball_pos.y = y_ + uy * stop_dist;
+
+        std::ostringstream oss;
+        oss << "[BALL_FINAL_DBG] "
+            << "v=" << v
+            << " | ax=" << ax_ << " ay=" << ay_
+            << " | a_t=" << a_t_signed
+            << " | a_dec=" << a_dec_dbg
+            << " | stop_dist=" << stop_dist;
+
+        brain->log->log("debug/final_ball_dbg", rerun::TextLog(oss.str()));
     }
 
     brain->data->Final_ball_pos = Final_ball_pos;
