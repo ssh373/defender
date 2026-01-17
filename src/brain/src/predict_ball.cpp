@@ -20,13 +20,11 @@ NodeStatus PredictBallTraj::tick()
     double sigma_a;   // process noise (Q)용 가속도 표준편차
     double P0_pos;    // 초기 위치 분산
     double P0_vel;    // 초기 속도 분산
-    double P0_acc;  
     
     getInput("R_meas",  R_meas);
     getInput("sigma_a", sigma_a);
     getInput("P0_pos",  P0_pos);
     getInput("P0_vel",  P0_vel);
-    getInput("P0_acc",  P0_acc);
 
     // 1) 측정값 (필드 좌표계) 
     auto bPos = brain->data->ball.posToField;
@@ -66,18 +64,15 @@ NodeStatus PredictBallTraj::tick()
         // 상태: [x y vx vy]  
         x_ = mx; y_ = my;
         vx_ = 0.0; vy_ = 0.0;
-        ax_ = 0.0; ay_ = 0.0;
 
-        for (int i = 0; i < 6; ++i)
-            for (int j = 0; j < 6; ++j)
+        for (int i = 0; i < 4; ++i)
+            for (int j = 0; j < 4; ++j)
                 P_[i][j] = 0.0;
 
         P_[0][0] = P_[1][1] = P0_pos;
         P_[2][2] = P_[3][3] = P0_vel;
-        P_[4][4] = P_[5][5] = P0_acc;
 
         kf_initialized_ = true;
-
         last_meas_stamp_ = meas_stamp;
         has_last_meas_ = true;
 
@@ -87,72 +82,68 @@ NodeStatus PredictBallTraj::tick()
     // 4) 예측 단계 (CV: 필드 좌표계)
     // 4-1) 상태 예측
     const double dt2 = dt*dt;
+    const double dt3 = dt2*dt;
+    const double dt4 = dt2*dt2;
+
+    double a_friction = 0.1;
+    getInput("a_friction", a_friction);
+
+    double v_now = std::hypot(vx_, vy_);
+    double ax_ = 0.0, ay_ = 0.0;
+    double ux = 0.0, uy = 0.0;
+
+    if (v_now > 1e-6) {
+        ux = vx_ / v_now;
+        uy = vy_ / v_now;
+        // 감속 크기 = a_friction, 방향 = 속도 반대
+        ax_ = -a_friction * ux;
+        ay_ = -a_friction * uy;
+    }
 
     const double x_pred  = x_  + vx_*dt + 0.5*ax_*dt2;
     const double y_pred  = y_  + vy_*dt + 0.5*ay_*dt2;
     const double vx_pred = vx_ + ax_*dt;
     const double vy_pred = vy_ + ay_*dt;
-    const double ax_pred = ax_;
-    const double ay_pred = ay_;
+
 
     // 4-2) 공분산 예측: P = F P F^T + Q
-    const double F[6][6] = {
-        { 1, 0, dt, 0, 0.5*dt2, 0},
-        { 0, 1, 0, dt, 0, 0.5*dt2},
-        { 0, 0, 1, 0, dt, 0},
-        { 0, 0, 0, 1, 0, dt},
-        { 0, 0, 0, 0, 1, 0},
-        { 0, 0, 0, 0, 0, 1}
+    const double F[4][4] = {
+        { 1, 0, dt, 0},
+        { 0, 1, 0, dt},
+        { 0, 0, 1, 0},
+        { 0, 0, 0, 1}
     };
 
     const double sa2 = sigma_a * sigma_a;
-    const double dt3 = dt2 * dt;
-    const double dt4 = dt2 * dt2;
-    const double dt5 = dt4 * dt;
 
-    double Q[6][6] = {0};
+    double Q[4][4] = {0};
     // x-block indices: 0(x), 2(vx), 4(ax)
-    Q[0][0] = sa2 * (dt5 / 20.0);
-    Q[0][2] = sa2 * (dt4 / 8.0);
-    Q[0][4] = sa2 * (dt3 / 6.0);
+    Q[0][0] = sa2 * (dt4 / 4.0);
+    Q[0][2] = sa2 * (dt3 / 2.0);
+    Q[2][0] = sa2 * (dt3 / 2.0);
+    Q[2][2] = sa2 * (dt2);
 
-    Q[2][0] = sa2 * (dt4 / 8.0);
-    Q[2][2] = sa2 * (dt3 / 3.0);
-    Q[2][4] = sa2 * (dt2 / 2.0);
-
-    Q[4][0] = sa2 * (dt3 / 6.0);
-    Q[4][2] = sa2 * (dt2 / 2.0);
-    Q[4][4] = sa2 * (dt);
-
-    // y-block indices: 1(y), 3(vy), 5(ay)
-    Q[1][1] = sa2 * (dt5 / 20.0);
-    Q[1][3] = sa2 * (dt4 / 8.0);
-    Q[1][5] = sa2 * (dt3 / 6.0);
-
-    Q[3][1] = sa2 * (dt4 / 8.0);
-    Q[3][3] = sa2 * (dt3 / 3.0);
-    Q[3][5] = sa2 * (dt2 / 2.0);
-
-    Q[5][1] = sa2 * (dt3 / 6.0);
-    Q[5][3] = sa2 * (dt2 / 2.0);
-    Q[5][5] = sa2 * (dt);
+    Q[1][1] = sa2 * (dt4 / 4.0);
+    Q[1][3] = sa2 * (dt3 / 2.0);
+    Q[3][1] = sa2 * (dt3 / 2.0);
+    Q[3][3] = sa2 * (dt2);
 
     // FP = F * P
-    double FP[6][6] = {0};
-    for (int i = 0; i < 6; ++i) {
-        for (int j = 0; j < 6; ++j) {
+    double FP[4][4] = {0};
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
             double sum = 0.0;
-            for (int k = 0; k < 6; ++k) sum += F[i][k] * P_[k][j];
+            for (int k = 0; k < 4; ++k) sum += F[i][k] * P_[k][j];
             FP[i][j] = sum;
         }
     }
 
     // P_pred = FP * F^T + Q
-    double P_pred[6][6] = {0};
-    for (int i = 0; i < 6; ++i) {
-        for (int j = 0; j < 6; ++j) {
+    double P_pred[4][4] = {0};
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
             double sum = 0.0;
-            for (int k = 0; k < 6; ++k) sum += FP[i][k] * F[j][k]; // F^T(k,j)=F(j,k)
+            for (int k = 0; k < 4; ++k) sum += FP[i][k] * F[j][k]; // F^T(k,j)=F(j,k)
             P_pred[i][j] = sum + Q[i][j];
         }
     }
@@ -162,11 +153,9 @@ NodeStatus PredictBallTraj::tick()
     y_  = y_pred;
     vx_ = vx_pred;
     vy_ = vy_pred;
-    ax_=ax_pred; 
-    ay_=ay_pred;
 
-    for (int i = 0; i < 6; ++i)
-        for (int j = 0; j < 6; ++j)
+    for (int i = 0; i < 4; ++i)
+        for (int j = 0; j < 4; ++j)
             P_[i][j] = P_pred[i][j];
 
     // 5) 업데이트 단계 
@@ -189,8 +178,8 @@ NodeStatus PredictBallTraj::tick()
     const double invS11 =  S00 / detS;
 
     // K = P H^T S^-1 (4x2) : P의 첫 두 열만 사용
-    double K[6][2];
-    for (int i=0;i<6;++i) {
+    double K[4][2];
+    for (int i=0;i<4;++i) {
         const double Pi0 = P_[i][0];
         const double Pi1 = P_[i][1];
         K[i][0] = Pi0*invS00 + Pi1*invS10;
@@ -202,34 +191,32 @@ NodeStatus PredictBallTraj::tick()
     y_  += K[1][0]*r0 + K[1][1]*r1;
     vx_ += K[2][0]*r0 + K[2][1]*r1;
     vy_ += K[3][0]*r0 + K[3][1]*r1;
-    ax_ += K[4][0]*r0 + K[4][1]*r1;
-    ay_ += K[5][0]*r0 + K[5][1]*r1;
 
     // 공분산 업데이트: P = (I - K H) P
-    double Pold[6][6];
-    for (int i = 0; i < 6; ++i)
-        for (int j = 0; j < 6; ++j)
+    double Pold[4][4];
+    for (int i = 0; i < 4; ++i)
+        for (int j = 0; j < 4; ++j)
             Pold[i][j] = P_[i][j];
 
-    double IKH[6][6] = {0};
-    for (int i = 0; i < 6; ++i) IKH[i][i] = 1.0;
+    double IKH[4][4] = {0};
+    for (int i = 0; i < 4; ++i) IKH[i][i] = 1.0;
 
-    for (int i=0;i<6;++i) {
+    for (int i=0;i<4;++i) {
         IKH[i][0] -= K[i][0];  // subtract K*H for x
         IKH[i][1] -= K[i][1];  // subtract K*H for y
     }
 
-    double Pnew[6][6] = {0};
-    for (int i = 0; i < 6; ++i) {
-        for (int j = 0; j < 6; ++j) {
+    double Pnew[4][4] = {0};
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
             double sum = 0.0;
-            for (int k = 0; k < 6; ++k) sum += IKH[i][k] * Pold[k][j];
+            for (int k = 0; k < 4; ++k) sum += IKH[i][k] * Pold[k][j];
             Pnew[i][j] = sum;
         }
     }
 
-    for (int i = 0; i < 6; ++i)
-        for (int j = 0; j < 6; ++j)
+    for (int i = 0; i < 4; ++i)
+        for (int j = 0; j < 4; ++j)
             P_[i][j] = Pnew[i][j]; 
         
     last_meas_stamp_ = meas_stamp;
@@ -239,9 +226,6 @@ NodeStatus PredictBallTraj::tick()
     // 6) 미래 위치 예측 (horizon)
     double horizon = 0.5;
     getInput("horizon", horizon);
-
-    double a_friction = 0.1;
-    getInput("a_friction", a_friction);
 
     const double h2 = horizon*horizon;
 
