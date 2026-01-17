@@ -20,7 +20,6 @@ public:
             InputPort<double>("sigma_a", 1.5, "proccess noise (Q)"),
             InputPort<double>("P0_pos", 0.25, "위치 공분산의 초기값"), 
             InputPort<double>("P0_vel", 1.0, "속도 공분산의 초기값"), 
-            InputPort<double>("P0_acc", 5.0, "가속도 공분산의 초기값"), 
             InputPort<double>("horizon", 0.5, "horizen초 뒤의 공을 예측"),
             InputPort<double>("ctPosx", -4.5, "골대중앙의 위치"),
             InputPort<double>("ctPosy", 0.0, "골대중앙의 위치"),
@@ -37,8 +36,8 @@ private:
 
     // ----- Kalman Filter 상태 -----
     bool kf_initialized_{false};
-    double x_{0.0}, y_{0.0}, vx_{0.0}, vy_{0.0}, ax_{0.0}, ay_{0.0};
-    double P_[6][6]{};  // 0으로 초기화
+    double x_{0.0}, y_{0.0}, vx_{0.0}, vy_{0.0};
+    double P_[4][4]{};  // 0으로 초기화
 
     // ----- 카메라 들어오는 프레임 판별용 -----
     bool has_last_meas_{false};
