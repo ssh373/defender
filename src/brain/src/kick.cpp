@@ -198,49 +198,49 @@ NodeStatus CalcPassDir::tick(){
     getInput("min_pass_threshold", minpassThreshold);
 
     auto bPos = brain->data->ball.posToField; // 공 위치
-    // int bestTeammateIdx = -1;
-    // double minDist = 9999.0;
+    int bestTeammateIdx = -1;
+    double minDist = 9999.0;
     auto fd = brain->config->fieldDimensions; // 필드 정보
     auto color = 0xFFFFFFFF;
 
-    auto robots = brain->data->getRobots();
-    int bestIdx = -1;            // robots 벡터 내 인덱스
-    double minDist = 1e9;
-    // 비전에서 인식된 teammate 중 패스 대상 선정
-    for (int i = 0; i < (int)robots.size(); ++i) {
-        const auto& r = robots[i];
-        // 2) 필드 좌표가 유효하다고 가정하고 거리 계산
-        //    (만약 posToField가 불안정하면 posToRobot로 거리만 보고 방향은 다른 방식으로 처리할 수도 있습니다.)
-        double dist = norm(bPos.x - r.posToField.x, bPos.y - r.posToField.y);
+    // auto robots = brain->data->getRobots();
+    // int bestIdx = -1;            // robots 벡터 내 인덱스
+    // double minDist = 1e9;
+    // // 비전에서 인식된 teammate 중 패스 대상 선정
+    // for (int i = 0; i < (int)robots.size(); ++i) {
+    //     const auto& r = robots[i];
+    //     // 2) 필드 좌표가 유효하다고 가정하고 거리 계산
+    //     //    (만약 posToField가 불안정하면 posToRobot로 거리만 보고 방향은 다른 방식으로 처리할 수도 있습니다.)
+    //     double dist = norm(bPos.x - r.posToField.x, bPos.y - r.posToField.y);
 
-        if (dist > minpassThreshold && dist < maxpassThreshold && dist < minDist) {
-            minDist = dist;
-            bestIdx = i;
-        }
-    }
-
-    // // 가장 가까운(혹은 적절한) 팀원 찾기
-    // for(int i=0; i<HL_MAX_NUM_PLAYERS; i++){
-    //     // 나 자신 제외, 살아있는 팀원 확인
-    //     if(i + 1 == brain->config->playerId) continue;
-    //     if(!brain->data->tmStatus[i].isAlive) continue; 
-        
-    //     // 팀원 위치
-    //     auto tmPos = brain->data->tmStatus[i].robotPoseToField;
-        
-    //     // 거리 계산
-    //     double dist = norm(bPos.x - tmPos.x, bPos.y - tmPos.y);
-
-    //     // 유효 거리 내에 있고, 가장 가까운 팀원 선택 (단순 거리 기준)
-    //     if( dist > minpassThreshold && dist < maxpassThreshold && dist < minDist){
+    //     if (dist > minpassThreshold && dist < maxpassThreshold && dist < minDist) {
     //         minDist = dist;
-    //         bestTeammateIdx = i;
+    //         bestIdx = i;
     //     }
     // }
 
+    // // 가장 가까운(혹은 적절한) 팀원 찾기
+    for(int i=0; i<HL_MAX_NUM_PLAYERS; i++){
+        // 나 자신 제외, 살아있는 팀원 확인
+        if(i + 1 == brain->config->playerId) continue;
+        if(!brain->data->tmStatus[i].isAlive) continue; 
+        
+        // 팀원 위치
+        auto tmPos = brain->data->tmStatus[i].robotPoseToField;
+        
+        // 거리 계산
+        double dist = norm(bPos.x - tmPos.x, bPos.y - tmPos.y);
+
+        // 유효 거리 내에 있고, 가장 가까운 팀원 선택 (단순 거리 기준)
+        if( dist > minpassThreshold && dist < maxpassThreshold && dist < minDist){
+            minDist = dist;
+            bestTeammateIdx = i;
+        }
+    }
+
     // 패스가 가능한지 ? 아니라면 다음으로 (bestTeammateIdx가 한명이라도 있고, 목표 범위 내에 로봇이 왔는지 확인)
-    // bool passFound = (bestTeammateIdx != -1);
-    bool passFound = (bestIdx != -1);
+    bool passFound = (bestTeammateIdx != -1);
+    // bool passFound = (bestIdx != -1);
 
     setOutput("pass_found", passFound);
 
@@ -249,10 +249,10 @@ NodeStatus CalcPassDir::tick(){
     }
     
     brain->data->kickType = "pass"; // 킥 타입 설정
-    // auto tmPos = brain->data->tmStatus[bestTeammateIdx].robotPoseToField;
+    auto tmPos = brain->data->tmStatus[bestTeammateIdx].robotPoseToField;
 
-    const auto& tm = robots[bestIdx];
-    auto tmPos = tm.posToField;
+    // const auto& tm = robots[bestIdx];
+    // auto tmPos = tm.posToField;
 
     double offset = 0.;
     // 골대 중심 좌표
